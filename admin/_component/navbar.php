@@ -7,6 +7,7 @@ $page_titles = [
     'admin.php' => 'Admin',
     'siswa.php' => 'Siswa',
     'pembina.php' => 'Pembina',
+    'ekstrakulikuler.php' => 'Ekstrakulikuler',
 ];
 
 // Ambil judul dari mapping, fallback ke nama file jika tidak ditemukan

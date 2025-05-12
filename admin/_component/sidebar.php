@@ -72,12 +72,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link  " href="../pages/tables.html">
+                <a class="nav-link <?= $current_page == 'ekstrakulikuler.php' ? 'active' : '' ?>"
+                    href="ekstrakulikuler.php">
                     <div
                         class="icon icon-shape icon-sm px-0 text-center d-flex align-items-center justify-content-center">
                         <svg width="30px" height="30px" viewBox="0 0 48 48" version="1.1"
                             xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                            <title>table</title>
+                            <title>Data Ekstrakulikuler</title>
                             <g id="table" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                                 <g id="view-grid" transform="translate(12.000000, 12.000000)" fill="#FFFFFF"
                                     fill-rule="nonzero">
@@ -97,7 +98,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             </g>
                         </svg>
                     </div>
-                    <span class="nav-link-text ms-1">Tables</span>
+                    <span class="nav-link-text ms-1">Ekstrakulikuler</span>
                 </a>
             </li>
             <li class="nav-item">

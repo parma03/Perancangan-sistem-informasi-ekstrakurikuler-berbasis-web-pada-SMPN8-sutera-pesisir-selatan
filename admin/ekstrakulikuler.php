@@ -17,222 +17,13 @@ if (isset($_SESSION['role'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
-    $nama = $_POST['nama'];
-    $role = "Siswa";
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $random_name = null;
-
-    if (isset($_FILES['file']) && $_FILES['file']['error'] != UPLOAD_ERR_NO_FILE) {
-        $file_name = $_FILES['file']['name'];
-        $file_temp = $_FILES['file']['tmp_name'];
-        $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
-        $random_name = uniqid() . '.' . $file_ext;
-        $file_path = "../assets/img/profile/" . $random_name;
-
-        if (!move_uploaded_file($file_temp, $file_path)) {
-            $_SESSION['notification'] = "Gagal mengunggah foto profil.";
-            $_SESSION['alert'] = "alert-danger";
-            header("Location: siswa.php");
-            exit();
-        }
-    }
-
-    $query_cek = "SELECT COUNT(*) AS count FROM tb_user WHERE username = ?";
-    $stmt_cek = $conn->prepare($query_cek);
-    $stmt_cek->bind_param("s", $username);
-    $stmt_cek->execute();
-    $result = $stmt_cek->get_result();
-    $data = $result->fetch_assoc();
-    $stmt_cek->close();
-
-    if ($data['count'] > 0) {
-        if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-            unlink("../assets/img/profile/" . $random_name);
-        }
-        $_SESSION['notification'] = "Username sudah terdaftar.";
-        $_SESSION['alert'] = "alert-danger";
-        header("Location: siswa.php");
-        exit();
-    }
-
-    $query_user = "INSERT INTO tb_user (username, password, role) VALUES (?, ?, ?)";
-    $stmt = $conn->prepare($query_user);
-    $stmt->bind_param("sss", $username, $password, $role);
-
-    if ($stmt->execute()) {
-        $last_id = $stmt->insert_id;
-
-        $query_admin = "INSERT INTO tb_siswa (id_user, siswa_nama, siswa_profile) VALUES (?, ?, ?)";
-        $stmt_admin = $conn->prepare($query_admin);
-        $stmt_admin->bind_param("iss", $last_id, $nama, $random_name);
-
-        if ($stmt_admin->execute()) {
-            $stmt_admin->close();
-            $stmt->close();
-            $_SESSION['notification'] = "Data Siswa berhasil ditambah.";
-            $_SESSION['alert'] = "alert-success";
-            header("Location: siswa.php");
-            exit();
-        } else {
-            $conn->query("DELETE FROM tb_user WHERE id_user = $last_id");
-            if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-                unlink("../assets/img/profile/" . $random_name);
-            }
-            $stmt_admin->close();
-            $stmt->close();
-            $_SESSION['notification'] = "Gagal menambah data siswa.";
-            $_SESSION['alert'] = "alert-danger";
-            header("Location: siswa.php");
-            exit();
-        }
-    } else {
-        if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-            unlink("../assets/img/profile/" . $random_name);
-        }
-        $stmt->close();
-        $_SESSION['notification'] = "Gagal menambah user.";
-        $_SESSION['alert'] = "alert-danger";
-        header("Location: siswa.php");
-        exit();
-    }
 }
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
-    $id_user = $_POST['id_user'];
-    $nama = $_POST['nama'];
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $random_name = null;
-    $delete_old_photo = false;
-
-    $query_existing = "SELECT siswa_profile, username AS current_username FROM tb_siswa JOIN tb_user ON tb_siswa.id_user = tb_user.id_user WHERE tb_siswa.id_user = ?";
-    $stmt_existing = $conn->prepare($query_existing);
-    $stmt_existing->bind_param("i", $id_user);
-    $stmt_existing->execute();
-    $result_existing = $stmt_existing->get_result();
-    $existing_data = $result_existing->fetch_assoc();
-    $existing_profile = $existing_data['siswa_profile'];
-    $current_username = $existing_data['current_username'];
-    $stmt_existing->close();
-
-    if (isset($_FILES['file']) && $_FILES['file']['error'] != UPLOAD_ERR_NO_FILE) {
-        $file_name = $_FILES['file']['name'];
-        $file_temp = $_FILES['file']['tmp_name'];
-        $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
-        $random_name = uniqid() . '.' . $file_ext;
-        $file_path = "../assets/img/profile/" . $random_name;
-
-        if (!move_uploaded_file($file_temp, $file_path)) {
-            $_SESSION['notification'] = "Gagal mengunggah foto profil.";
-            $_SESSION['alert'] = "alert-danger";
-            header("Location: siswa.php");
-            exit();
-        }
-
-        $delete_old_photo = true;
-    }
-
-    $query_duplicate = "SELECT COUNT(*) AS count FROM tb_user WHERE username = ? AND id_user != ?";
-    $stmt_duplicate = $conn->prepare($query_duplicate);
-    $stmt_duplicate->bind_param("si", $username, $id_user);
-    $stmt_duplicate->execute();
-    $result_duplicate = $stmt_duplicate->get_result();
-    $duplicate_count = $result_duplicate->fetch_assoc()['count'];
-    $stmt_duplicate->close();
-
-    if ($duplicate_count > 0) {
-        if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-            unlink("../assets/img/profile/" . $random_name);
-        }
-        $_SESSION['notification'] = "Username sudah terdaftar.";
-        $_SESSION['alert'] = "alert-danger";
-        header("Location: siswa.php");
-        exit();
-    }
-
-    $query_user = "UPDATE tb_user SET username = ?, password = ? WHERE id_user = ?";
-    $stmt = $conn->prepare($query_user);
-    $stmt->bind_param("ssi", $username, $password, $id_user);
-
-    if ($stmt->execute()) {
-        $photo_to_save = $random_name ?? $existing_profile;
-
-        $query_admin = "UPDATE tb_siswa SET siswa_nama = ?, siswa_profile = ? WHERE id_user = ?";
-        $stmt_admin = $conn->prepare($query_admin);
-        $stmt_admin->bind_param("ssi", $nama, $photo_to_save, $id_user);
-
-        if ($stmt_admin->execute()) {
-            if ($delete_old_photo && $existing_profile && file_exists("../assets/img/profile/" . $existing_profile)) {
-                unlink("../assets/img/profile/" . $existing_profile);
-            }
-
-            $stmt_admin->close();
-            $stmt->close();
-            $_SESSION['notification'] = "Data Siswa berhasil diupdate.";
-            $_SESSION['alert'] = "alert-success";
-            header("Location: siswa.php");
-            exit();
-        } else {
-            $stmt_user_revert = $conn->prepare("UPDATE tb_user SET username = ? WHERE id_user = ?");
-            $stmt_user_revert->bind_param("si", $current_username, $id_user);
-            $stmt_user_revert->execute();
-            $stmt_user_revert->close();
-
-            if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-                unlink("../assets/img/profile/" . $random_name);
-            }
-
-            $stmt_admin->close();
-            $stmt->close();
-            $_SESSION['notification'] = "Gagal update data siswa.";
-            $_SESSION['alert'] = "alert-danger";
-            header("Location: siswa.php");
-            exit();
-        }
-    } else {
-        if ($random_name && file_exists("../assets/img/profile/" . $random_name)) {
-            unlink("../assets/img/profile/" . $random_name);
-        }
-        $stmt->close();
-        $_SESSION['notification'] = "Gagal menambah user.";
-        $_SESSION['alert'] = "alert-danger";
-        header("Location: siswa.php");
-        exit();
-    }
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete'])) {
-    $id_user = $_POST['id_user'];
-
-    $query_select = "SELECT siswa_profile FROM tb_siswa WHERE id_user = ?";
-    $stmt_select = $conn->prepare($query_select);
-    $stmt_select->bind_param("i", $id_user);
-    $stmt_select->execute();
-    $result = $stmt_select->get_result()->fetch_assoc();
-    $profile = @$result['siswa_profile'];
-
-    if ($profile && file_exists("../assets/img/profile/" . $profile)) {
-        unlink("../assets/img/profile/" . $profile);
-    }
-
-    $query_admin = "DELETE FROM tb_user WHERE id_user = ?";
-    $stmt = $conn->prepare($query_admin);
-    $stmt->bind_param("i", $id_user);
-
-    if ($stmt->execute()) {
-        $_SESSION['notification'] = "Data Siswa berhasil dihapus.";
-        $_SESSION['alert'] = "alert-success";
-        header("Location: siswa.php");
-        exit();
-    } else {
-        echo "Error: " . $stmt->error;
-    }
-
-    $stmt->close();
-    $stmt_cek->close();
-    $conn->close();
 }
 
 $query = "SELECT * FROM tb_user INNER JOIN tb_siswa ON tb_user.id_user = tb_siswa.id_user";
@@ -326,9 +117,9 @@ $result = $conn->query($query);
                         <div class="card-header border-bottom-0 pb-0">
                             <div class="d-sm-flex align-items-center mb-3">
                                 <div>
-                                    <h6 class="font-weight-semibold text-lg mb-0">Data Siswa</h6>
+                                    <h6 class="font-weight-semibold text-lg mb-0">Data Ekstrakurikuler</h6>
                                     <p class="text-sm text-muted mb-sm-0">
-                                        Keseluruhan data User dengan Role Siswa
+                                        Keseluruhan data Ekstrakurikuler
                                     </p>
                                 </div>
                                 <div class="ms-auto d-flex">
@@ -338,7 +129,7 @@ $result = $conn->query($query);
                                         <span class="btn-inner--icon">
                                             <i class="fas fa-user-plus me-2"></i>
                                         </span>
-                                        <span class="btn-inner--text">Add Siswa</span>
+                                        <span class="btn-inner--text">Add Ekstrakurikuler</span>
                                     </button>
                                 </div>
                             </div>
@@ -684,7 +475,7 @@ $result = $conn->query($query);
                 lengthMenu: [10, 25, 50],
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search Data Siswa...",
+                    searchPlaceholder: "Search Data Ekstrakurikuler...",
                     paginate: {
                         previous: "<i class='fas fa-chevron-left'></i>",
                         next: "<i class='fas fa-chevron-right'></i>"
@@ -728,53 +519,6 @@ $result = $conn->query($query);
             }
             Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
         }
-    </script>
-    <script>
-        document.getElementById("togglePassword").addEventListener("click", function () {
-            const passwordInput = document.getElementById("password");
-            const icon = this.querySelector("i");
-
-            const isPassword = passwordInput.type === "password";
-            passwordInput.type = isPassword ? "text" : "password";
-
-            icon.classList.toggle("fa-eye");
-            icon.classList.toggle("fa-eye-slash");
-        });
-    </script>
-    <script>
-        function handleProfileImagePreview(inputElement, previewImageElement) {
-            if (inputElement.files && inputElement.files[0]) {
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-                    previewImageElement.src = e.target.result;
-                };
-
-                reader.readAsDataURL(inputElement.files[0]);
-            } else {
-                const originalSrc = previewImageElement.getAttribute('data-original-src');
-                if (originalSrc) {
-                    previewImageElement.src = originalSrc;
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            const fileInputs = document.querySelectorAll('input[name="file"]');
-
-            fileInputs.forEach(function (fileInput) {
-                const modal = fileInput.closest('.modal');
-                const previewImage = modal.querySelector('.card-img-center');
-
-                if (previewImage) {
-                    previewImage.setAttribute('data-original-src', previewImage.src);
-
-                    fileInput.addEventListener('change', function () {
-                        handleProfileImagePreview(this, previewImage);
-                    });
-                }
-            });
-        });
     </script>
 
 </body>
