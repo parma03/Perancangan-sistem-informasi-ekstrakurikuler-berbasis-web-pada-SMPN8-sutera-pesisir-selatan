@@ -13,6 +13,9 @@ if (isset($_SESSION['role'])) {
     } else if ($_SESSION['role'] === 'Siswa') {
         header("Location: siswa/index.php");
         exit();
+    } else if ($_SESSION['role'] === 'Wakil') {
+        header("Location: wakil/index.php");
+        exit();
     }
 }
 
@@ -33,52 +36,93 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
         $id_user = $_SESSION['id_user'];
 
         if ($user['role'] === 'Administrator') {
-            $query = "SELECT * FROM tb_user INNER JOIN tb_admin ON tb_user.id_user = tb_admin.adm_id WHERE tb_user.id_user = ?";
+            $query = "SELECT * FROM tb_user INNER JOIN tb_admin ON tb_user.id_user = tb_admin.id_user WHERE tb_user.id_user = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("i", $id_user);
             $stmt->execute();
             $result = $stmt->get_result();
             $admin = $result->fetch_assoc();
-            $_SESSION['id_user'] = $admin['id_user'];
-            $_SESSION['username'] = $admin['username'];
-            $_SESSION['adm_nama'] = $admin['nama'];
-            $_SESSION['adm_profile'] = $admin['profile'];
-            header("Location: admin/index.php");
-            exit();
+            if ($admin) {
+                $_SESSION['id_user'] = $admin['id_user'];
+                $_SESSION['username'] = $admin['username'];
+                $_SESSION['adm_nama'] = $admin['nama'];
+                $_SESSION['adm_profile'] = $admin['profile'];
+                header("Location: admin/index.php");
+                exit();
+            }
         } else if ($user['role'] === 'Pembina') {
-            $query = "SELECT * FROM tb_user INNER JOIN tb_pembina ON tb_user.id_user = tb_pembina.pembina_id WHERE tb_user.id_user = ?";
+            $query = "SELECT * FROM tb_user INNER JOIN tb_pembina ON tb_user.id_user = tb_pembina.id_user WHERE tb_user.id_user = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("i", $id_user);
             $stmt->execute();
             $result = $stmt->get_result();
             $pembina = $result->fetch_assoc();
-            $_SESSION['id_user'] = $pembina['id_user'];
-            $_SESSION['username'] = $pembina['username'];
-            $_SESSION['pembina_nama'] = $pembina['nama'];
-            $_SESSION['pembina_profile'] = $pembina['profile'];
-            header("Location: pembina/index.php");
-            exit();
+            if ($pembina) {
+                $_SESSION['id_user'] = $pembina['id_user'];
+                $_SESSION['username'] = $pembina['username'];
+                $_SESSION['pembina_nama'] = $pembina['nama'];
+                $_SESSION['pembina_profile'] = $pembina['profile'];
+                header("Location: pembina/index.php");
+                exit();
+            }
         } else if ($user['role'] === 'Siswa') {
-            $query = "SELECT * FROM tb_user INNER JOIN tb_siswa ON tb_user.id_user = tb_siswa.siswa_id WHERE tb_user.id_user = ?";
+            $query = "SELECT * FROM tb_user INNER JOIN tb_siswa ON tb_user.id_user = tb_siswa.id_user WHERE tb_user.id_user = ?";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("i", $id_user);
             $stmt->execute();
             $result = $stmt->get_result();
             $siswa = $result->fetch_assoc();
-            $_SESSION['id_user'] = $siswa['id_user'];
-            $_SESSION['username'] = $siswa['username'];
-            $_SESSION['siswa_nama'] = $siswa['nama'];
-            $_SESSION['siswa_profile'] = $siswa['profile'];
-            header("Location: siswa/index.php");
-            exit();
+            if ($siswa) {
+                $_SESSION['id_user'] = $siswa['id_user'];
+                $_SESSION['username'] = $siswa['username'];
+                $_SESSION['siswa_nama'] = $siswa['nama'];
+                $_SESSION['siswa_profile'] = $siswa['profile'];
+                header("Location: siswa/index.php");
+                exit();
+            }
+        } else if ($user['role'] === 'Wakil') {
+            $query = "SELECT * FROM tb_user INNER JOIN tb_wakilkepalasekolah ON tb_user.id_user = tb_wakilkepalasekolah.id_user WHERE tb_user.id_user = ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $id_user);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result && $result->num_rows > 0) {
+                $wakil = $result->fetch_assoc();
+                if ($wakil) {
+                    $_SESSION['id_user'] = $wakil['id_user'];
+                    $_SESSION['username'] = $wakil['username'];
+                    $_SESSION['wakilkepalasekolah_nama'] = $wakil['nama'];
+                    $_SESSION['wakilkepalasekolah_profile'] = $wakil['profile'];
+                    header("Location: wakil/index.php");
+                    exit();
+                }
+            } else {
+                // If no matching record found in tb_wakilkepalasekolah
+                $_SESSION['notification'] = "Data profil tidak ditemukan. Hubungi administrator.";
+                $_SESSION['alert'] = "alert-warning";
+                // Cleanup session
+                unset($_SESSION['id_user']);
+                unset($_SESSION['username']);
+                unset($_SESSION['role']);
+                header("Location: index.php");
+                exit();
+            }
         }
+
+        // If we get here, something went wrong with the role-specific data
+        $_SESSION['notification'] = "Terjadi kesalahan saat mengambil data profil. Hubungi administrator.";
+        $_SESSION['alert'] = "alert-warning";
+        // Cleanup session
+        unset($_SESSION['id_user']);
+        unset($_SESSION['username']);
+        unset($_SESSION['role']);
     } else {
         $_SESSION['notification'] = "Username atau Password Salah.";
         $_SESSION['alert'] = "alert-danger";
-        header("Location: index.php");
-        exit();
     }
     $stmt->close();
+    header("Location: index.php");
+    exit();
 }
 ?>
 <!DOCTYPE html>

@@ -10,6 +10,9 @@ if (isset($_SESSION['role'])) {
     } else if ($_SESSION['role'] === 'Siswa') {
         header("Location: ../siswa/index.php");
         exit();
+    } else if ($_SESSION['role'] === 'Wakil') {
+        header("Location: ../wakil/index.php");
+        exit();
     }
 } else {
     header("Location: ../index.php");

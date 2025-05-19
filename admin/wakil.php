@@ -21,7 +21,7 @@ if (isset($_SESSION['role'])) {
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
     $nama = $_POST['nama'];
-    $role = "Administrator";
+    $role = "Wakil";
     $username = $_POST['username'];
     $password = $_POST['password'];
     $random_name = null;
@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
         if (!move_uploaded_file($file_temp, $file_path)) {
             $_SESSION['notification'] = "Gagal mengunggah foto profil.";
             $_SESSION['alert'] = "alert-danger";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         }
     }
@@ -55,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
         }
         $_SESSION['notification'] = "Username sudah terdaftar.";
         $_SESSION['alert'] = "alert-danger";
-        header("Location: admin.php");
+        header("Location: wakil.php");
         exit();
     }
 
@@ -66,16 +66,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
     if ($stmt->execute()) {
         $last_id = $stmt->insert_id;
 
-        $query_admin = "INSERT INTO tb_admin (id_user, adm_nama, adm_profile) VALUES (?, ?, ?)";
+        $query_admin = "INSERT INTO tb_wakilkepalasekolah (id_user, wakilkepalasekolah_nama, wakilkepalasekolah_profile) VALUES (?, ?, ?)";
         $stmt_admin = $conn->prepare($query_admin);
         $stmt_admin->bind_param("iss", $last_id, $nama, $random_name);
 
         if ($stmt_admin->execute()) {
             $stmt_admin->close();
             $stmt->close();
-            $_SESSION['notification'] = "Data Admin berhasil ditambah.";
+            $_SESSION['notification'] = "Data Wakil berhasil ditambah.";
             $_SESSION['alert'] = "alert-success";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         } else {
             $conn->query("DELETE FROM tb_user WHERE id_user = $last_id");
@@ -84,9 +84,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
             }
             $stmt_admin->close();
             $stmt->close();
-            $_SESSION['notification'] = "Gagal menambah data admin.";
+            $_SESSION['notification'] = "Gagal menambah data wakil.";
             $_SESSION['alert'] = "alert-danger";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         }
     } else {
@@ -96,7 +96,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tambah'])) {
         $stmt->close();
         $_SESSION['notification'] = "Gagal menambah user.";
         $_SESSION['alert'] = "alert-danger";
-        header("Location: admin.php");
+        header("Location: wakil.php");
         exit();
     }
 }
@@ -110,13 +110,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
     $random_name = null;
     $delete_old_photo = false;
 
-    $query_existing = "SELECT adm_profile, username AS current_username FROM tb_admin JOIN tb_user ON tb_admin.id_user = tb_user.id_user WHERE tb_admin.id_user = ?";
+    $query_existing = "SELECT wakilkepalasekolah_profile, username AS current_username FROM tb_wakilkepalasekolah JOIN tb_user ON tb_wakilkepalasekolah.id_user = tb_user.id_user WHERE tb_wakilkepalasekolah.id_user = ?";
     $stmt_existing = $conn->prepare($query_existing);
     $stmt_existing->bind_param("i", $id_user);
     $stmt_existing->execute();
     $result_existing = $stmt_existing->get_result();
     $existing_data = $result_existing->fetch_assoc();
-    $existing_profile = $existing_data['adm_profile'];
+    $existing_profile = $existing_data['wakilkepalasekolah_profile'];
     $current_username = $existing_data['current_username'];
     $stmt_existing->close();
 
@@ -130,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
         if (!move_uploaded_file($file_temp, $file_path)) {
             $_SESSION['notification'] = "Gagal mengunggah foto profil.";
             $_SESSION['alert'] = "alert-danger";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         }
 
@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
         }
         $_SESSION['notification'] = "Username sudah terdaftar.";
         $_SESSION['alert'] = "alert-danger";
-        header("Location: admin.php");
+        header("Location: wakil.php");
         exit();
     }
 
@@ -162,7 +162,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
     if ($stmt->execute()) {
         $photo_to_save = $random_name ?? $existing_profile;
 
-        $query_admin = "UPDATE tb_admin SET adm_nama = ?, adm_profile = ? WHERE id_user = ?";
+        $query_admin = "UPDATE tb_wakilkepalasekolah SET wakilkepalasekolah_nama = ?, wakilkepalasekolah_profile = ? WHERE id_user = ?";
         $stmt_admin = $conn->prepare($query_admin);
         $stmt_admin->bind_param("ssi", $nama, $photo_to_save, $id_user);
 
@@ -173,9 +173,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
 
             $stmt_admin->close();
             $stmt->close();
-            $_SESSION['notification'] = "Data Admin berhasil diupdate.";
+            $_SESSION['notification'] = "Data Wakil berhasil diupdate.";
             $_SESSION['alert'] = "alert-success";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         } else {
             $stmt_user_revert = $conn->prepare("UPDATE tb_user SET username = ? WHERE id_user = ?");
@@ -189,9 +189,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
 
             $stmt_admin->close();
             $stmt->close();
-            $_SESSION['notification'] = "Gagal update data admin.";
+            $_SESSION['notification'] = "Gagal update data wakil.";
             $_SESSION['alert'] = "alert-danger";
-            header("Location: admin.php");
+            header("Location: wakil.php");
             exit();
         }
     } else {
@@ -201,7 +201,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
         $stmt->close();
         $_SESSION['notification'] = "Gagal menambah user.";
         $_SESSION['alert'] = "alert-danger";
-        header("Location: admin.php");
+        header("Location: wakil.php");
         exit();
     }
 }
@@ -209,12 +209,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['edit'])) {
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete'])) {
     $id_user = $_POST['id_user'];
 
-    $query_select = "SELECT adm_profile FROM tb_admin WHERE id_user = ?";
+    $query_select = "SELECT wakilkepalasekolah_profile FROM tb_wakilkepalasekolah WHERE id_user = ?";
     $stmt_select = $conn->prepare($query_select);
     $stmt_select->bind_param("i", $id_user);
     $stmt_select->execute();
     $result = $stmt_select->get_result()->fetch_assoc();
-    $profile = @$result['adm_profile'];
+    $profile = @$result['wakilkepalasekolah_profile'];
 
     if ($profile && file_exists("../assets/img/profile/" . $profile)) {
         unlink("../assets/img/profile/" . $profile);
@@ -225,9 +225,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete'])) {
     $stmt->bind_param("i", $id_user);
 
     if ($stmt->execute()) {
-        $_SESSION['notification'] = "Data Admin berhasil dihapus.";
+        $_SESSION['notification'] = "Data Wakil berhasil dihapus.";
         $_SESSION['alert'] = "alert-success";
-        header("Location: admin.php");
+        header("Location: wakil.php");
         exit();
     } else {
         echo "Error: " . $stmt->error;
@@ -238,7 +238,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['delete'])) {
     $conn->close();
 }
 
-$query = "SELECT * FROM tb_user INNER JOIN tb_admin ON tb_user.id_user = tb_admin.id_user";
+$query = "SELECT * FROM tb_user INNER JOIN tb_wakilkepalasekolah ON tb_user.id_user = tb_wakilkepalasekolah.id_user";
 $result = $conn->query($query);
 ?>
 <!DOCTYPE html>
@@ -329,9 +329,9 @@ $result = $conn->query($query);
                         <div class="card-header border-bottom-0 pb-0">
                             <div class="d-sm-flex align-items-center mb-3">
                                 <div>
-                                    <h6 class="font-weight-semibold text-lg mb-0">Data Admin</h6>
+                                    <h6 class="font-weight-semibold text-lg mb-0">Data Wakil Kepala Sekolah</h6>
                                     <p class="text-sm text-muted mb-sm-0">
-                                        Keseluruhan data User dengan Role Admin
+                                        Keseluruhan data User dengan Role Wakil Kepala Sekolah
                                     </p>
                                 </div>
                                 <div class="ms-auto d-flex">
@@ -341,7 +341,7 @@ $result = $conn->query($query);
                                         <span class="btn-inner--icon">
                                             <i class="fas fa-user-plus me-2"></i>
                                         </span>
-                                        <span class="btn-inner--text">Add Admin</span>
+                                        <span class="btn-inner--text">Add Wakil</span>
                                     </button>
                                 </div>
                             </div>
@@ -378,13 +378,13 @@ $result = $conn->query($query);
                                                 </td>
                                                 <td>
                                                     <div class="d-flex align-items-center px-2 py-1">
-                                                        <?php if ($data["adm_profile"] === NULL) { ?>
+                                                        <?php if ($data["wakilkepalasekolah_profile"] === NULL) { ?>
                                                             <div class="trans-logo bg-gray-100 me-3">
                                                                 <img src="../assets/img/team-2.jpg" class="w-75" alt="xd">
                                                             </div>
                                                         <?php } else { ?>
                                                             <div class="trans-logo bg-gray-100 me-3">
-                                                                <img src="../assets/img/profile/<?php echo $data["adm_profile"]; ?>"
+                                                                <img src="../assets/img/profile/<?php echo $data["wakilkepalasekolah_profile"]; ?>"
                                                                     class="w-75" alt="xd">
                                                             </div>
                                                         <?php } ?>
@@ -396,7 +396,9 @@ $result = $conn->query($query);
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <p class="transaction-amount mb-0"><?php echo $data["adm_nama"] ?></p>
+                                                    <p class="transaction-amount mb-0">
+                                                        <?php echo $data["wakilkepalasekolah_nama"] ?>
+                                                    </p>
                                                 </td>
                                                 <td class="align-middle text-center">
                                                     <button type="button" class="btn-action" data-bs-toggle="modal"
@@ -416,7 +418,7 @@ $result = $conn->query($query);
                                                 </td>
                                             </tr>
 
-                                            <!-- Modal View Admin - Enhanced Version -->
+                                            <!-- Modal View -->
                                             <div class="modal fade" id="viewModal<?php echo $data["id_user"]; ?>"
                                                 tabindex="-1"
                                                 aria-labelledby="viewModalLabel<?php echo $data["id_user"]; ?>"
@@ -426,7 +428,8 @@ $result = $conn->query($query);
                                                         <div class="modal-header bg-gradient-primary text-white">
                                                             <h5 class="modal-title"
                                                                 id="viewModalLabel<?php echo $data["id_user"]; ?>">
-                                                                <i class="fas fa-user-circle me-2"></i>Detail Admin
+                                                                <i class="fas fa-user-circle me-2"></i>Detail Wakil Kepala
+                                                                Sekolah
                                                             </h5>
                                                             <button type="button" class="btn-close btn-close-white"
                                                                 data-bs-dismiss="modal" aria-label="Close"></button>
@@ -435,13 +438,13 @@ $result = $conn->query($query);
                                                             <div class="row">
                                                                 <div class="col-md-4 text-center mb-3">
                                                                     <div class="position-relative">
-                                                                        <?php if ($data["adm_profile"] === NULL) { ?>
+                                                                        <?php if ($data["wakilkepalasekolah_profile"] === NULL) { ?>
                                                                             <img src="../assets/img/team-2.jpg"
                                                                                 class="img-fluid rounded-circle shadow-lg"
                                                                                 style="max-width: 250px; height: 250px; object-fit: cover;"
                                                                                 alt="Profile Picture">
                                                                         <?php } else { ?>
-                                                                            <img src="../assets/img/profile/<?php echo $data["adm_profile"]; ?>"
+                                                                            <img src="../assets/img/profile/<?php echo $data["wakilkepalasekolah_profile"]; ?>"
                                                                                 class="img-fluid rounded-circle shadow-lg"
                                                                                 style="max-width: 250px; height: 250px; object-fit: cover;"
                                                                                 alt="Profile Picture">
@@ -457,8 +460,8 @@ $result = $conn->query($query);
                                                                     <div class="card border-0 shadow-sm">
                                                                         <div class="card-body">
                                                                             <h4 class="card-title mb-4 text-primary">
-                                                                                <i
-                                                                                    class="fas fa-id-card me-2"></i>Administrator
+                                                                                <i class="fas fa-id-card me-2"></i>Wakil
+                                                                                Kepala Sekolah
                                                                                 Information
                                                                             </h4>
                                                                             <div class="row mb-2">
@@ -468,7 +471,7 @@ $result = $conn->query($query);
                                                                                         Name</strong>
                                                                                 </div>
                                                                                 <div class="col-8">
-                                                                                    <?php echo htmlspecialchars($data["adm_nama"]); ?>
+                                                                                    <?php echo htmlspecialchars($data["wakilkepalasekolah_nama"]); ?>
                                                                                 </div>
                                                                             </div>
                                                                             <hr class="my-2">
@@ -508,7 +511,7 @@ $result = $conn->query($query);
                                                 </div>
                                             </div>
 
-                                            <!-- Modal Edit Admin -->
+                                            <!-- Modal Edit -->
                                             <div class="modal fade" id="editModal<?php echo $data["id_user"]; ?>"
                                                 tabindex="-1"
                                                 aria-labelledby="modalEditAdminLabel<?php echo $data["id_user"]; ?>"
@@ -518,22 +521,22 @@ $result = $conn->query($query);
                                                         <div class="modal-header">
                                                             <h5 class="modal-title"
                                                                 id="modalEditAdminLabel<?php echo $data["id_user"]; ?>">Edit
-                                                                Data Admin</h5>
+                                                                Data Wakil Kepala Sekolah</h5>
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-label="Close"></button>
                                                         </div>
                                                         <center>
                                                             <div class="col-md-3">
-                                                                <?php if ($data["adm_profile"] === NULL) { ?>
+                                                                <?php if ($data["wakilkepalasekolah_profile"] === NULL) { ?>
                                                                     <img class="card-img card-img-center align-items-center"
                                                                         src="../assets/img/team-2.jpg" />
                                                                 <?php } else { ?>
                                                                     <img class="card-img card-img-center align-items-center"
-                                                                        src="../assets/img/profile/<?php echo $data["adm_profile"]; ?>" />
+                                                                        src="../assets/img/profile/<?php echo $data["wakilkepalasekolah_profile"]; ?>" />
                                                                 <?php } ?>
                                                             </div>
                                                         </center>
-                                                        <form action="admin.php" method="POST"
+                                                        <form action="wakil.php" method="POST"
                                                             enctype="multipart/form-data">.
                                                             <input type="hidden" name="id_user"
                                                                 value="<?php echo $data["id_user"] ?>" required>
@@ -549,7 +552,8 @@ $result = $conn->query($query);
                                                                     <label for="nama" class="form-label">Nama
                                                                         Lengkap</label>
                                                                     <input type="text" class="form-control" id="nama"
-                                                                        name="nama" value="<?php echo $data["adm_nama"] ?>"
+                                                                        name="nama"
+                                                                        value="<?php echo $data["wakilkepalasekolah_nama"] ?>"
                                                                         required>
                                                                 </div>
                                                                 <div class="mb-3">
@@ -594,18 +598,19 @@ $result = $conn->query($query);
                                                         <div class="modal-header">
                                                             <h5 class="modal-title"
                                                                 id="deleteModalLabel<?php echo $data["id_user"]; ?>">
-                                                                Delete Data Admin
+                                                                Delete Data Wakil Kepala Sekolah
                                                             </h5>
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
                                                             <p>Yakin Menghapus Data ini,<b>
-                                                                    <?php echo $data['adm_nama']; ?></b> ?</p>
+                                                                    <?php echo $data['wakilkepalasekolah_nama']; ?></b> ?
+                                                            </p>
 
                                                         </div>
                                                         <div class="modal-footer">
-                                                            <form action="admin.php" method="post">
+                                                            <form action="wakil.php" method="post">
                                                                 <input type="hidden" name="id_user"
                                                                     value="<?php echo $data["id_user"]; ?>" />
                                                                 <button type="button" class="btn btn-secondary"
@@ -629,15 +634,15 @@ $result = $conn->query($query);
         </div>
     </main>
 
-    <!-- Modal Tambah Admin -->
+    <!-- Modal Tambah -->
     <div class="modal fade" id="modalAddAdmin" tabindex="-1" aria-labelledby="modalAddAdminLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalAddAdminLabel">Tambah Data Admin</h5>
+                    <h5 class="modal-title" id="modalAddAdminLabel">Tambah Data Wakil Kepala Sekolah</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="admin.php" method="POST" enctype="multipart/form-data">
+                <form action="wakil.php" method="POST" enctype="multipart/form-data">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
@@ -687,7 +692,7 @@ $result = $conn->query($query);
                 lengthMenu: [10, 25, 50],
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search Data Admin...",
+                    searchPlaceholder: "Search Data Wakil Kepala Sekolah...",
                     paginate: {
                         previous: "<i class='fas fa-chevron-left'></i>",
                         next: "<i class='fas fa-chevron-right'></i>"

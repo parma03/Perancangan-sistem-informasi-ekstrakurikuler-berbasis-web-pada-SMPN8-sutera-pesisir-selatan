@@ -7,6 +7,7 @@ $page_titles = [
     'admin.php' => 'Admin',
     'siswa.php' => 'Siswa',
     'pembina.php' => 'Pembina',
+    'wakil.php' => 'Wakil Kepala Sekolah',
     'ekstrakulikuler.php' => 'Ekstrakulikuler',
 ];
 

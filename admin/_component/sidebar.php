@@ -68,6 +68,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 <span class="sidenav-normal">Pembina</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?= $current_page == 'wakil.php' ? 'active' : '' ?>" href="wakil.php">
+                                <span class="sidenav-normal">Wakil Kepala Sekolah</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </li>
