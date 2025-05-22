@@ -10,8 +10,8 @@ if (isset($_SESSION['role'])) {
     } else if ($_SESSION['role'] === 'Siswa') {
         header("Location: ../siswa/index.php");
         exit();
-    } else if ($_SESSION['role'] === 'Wakil') {
-        header("Location: ../wakil/index.php");
+    } else if ($_SESSION['role'] === 'Administrator') {
+        header("Location: ../admin/index.php");
         exit();
     }
 } else {

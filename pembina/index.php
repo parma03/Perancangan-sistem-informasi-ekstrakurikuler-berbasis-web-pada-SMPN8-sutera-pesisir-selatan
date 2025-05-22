@@ -4,8 +4,8 @@ include '../db/koneksi.php';
 
 // Pengecekan session untuk redirect jika sudah login
 if (isset($_SESSION['role'])) {
-    if ($_SESSION['role'] === 'Pembina') {
-        header("Location: ../pembina/index.php");
+    if ($_SESSION['role'] === 'Administrator') {
+        header("Location: ../admin/index.php");
         exit();
     } else if ($_SESSION['role'] === 'Siswa') {
         header("Location: ../siswa/index.php");
@@ -42,7 +42,7 @@ try {
     $total_siswa = mysqli_fetch_assoc($result_siswa)['total'];
 
     // Perhitungan persentase pertumbuhan (contoh: bandingkan dengan periode sebelumnya)
-    // Untuk contoh, saya akan menggunakan perhitungan sederhana berdasarkan data yang ada
+    // Untuk contoh akan menggunakan perhitungan sederhana berdasarkan data yang ada
     $query_ekskul_prev = "SELECT COUNT(*) as total FROM tb_ekstrakulikuler WHERE periode < YEAR(CURDATE())";
     $result_ekskul_prev = mysqli_query($conn, $query_ekskul_prev);
     $total_ekskul_prev = mysqli_fetch_assoc($result_ekskul_prev)['total'];

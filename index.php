@@ -59,6 +59,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
             $pembina = $result->fetch_assoc();
             if ($pembina) {
                 $_SESSION['id_user'] = $pembina['id_user'];
+                $_SESSION['pembina_id'] = $pembina['pembina_id'];
                 $_SESSION['username'] = $pembina['username'];
                 $_SESSION['pembina_nama'] = $pembina['nama'];
                 $_SESSION['pembina_profile'] = $pembina['profile'];

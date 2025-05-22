@@ -38,44 +38,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="nav-link-text ms-1">Dashboard</span>
                 </a>
             </li>
-            <li class="nav-item mt-2">
-                <a class="d-flex align-items-center nav-link" data-bs-toggle="collapse" href="#accountPagesCollapse"
-                    role="button" aria-expanded="false" aria-controls="accountPagesCollapse">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="ms-2" viewBox="0 0 24 24"
-                        fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438zM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    <span class="font-weight-normal text-md ms-2">Data User</span>
-                </a>
-                <div class="collapse ps-4 <?= in_array($current_page, ['admin.php', 'siswa.php', 'pembina.php']) ? 'show' : '' ?>"
-                    id="accountPagesCollapse">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link <?= $current_page == 'admin.php' ? 'active' : '' ?>" href="admin.php">
-                                <span class="sidenav-normal">Admin</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link <?= $current_page == 'siswa.php' ? 'active' : '' ?>" href="siswa.php">
-                                <span class="sidenav-normal">Siswa</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link <?= $current_page == 'pembina.php' ? 'active' : '' ?>"
-                                href="pembina.php">
-                                <span class="sidenav-normal">Pembina</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link <?= $current_page == 'wakil.php' ? 'active' : '' ?>" href="wakil.php">
-                                <span class="sidenav-normal">Wakil Kepala Sekolah</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </li>
             <li class="nav-item">
                 <a class="nav-link <?= $current_page == 'ekstrakulikuler.php' ? 'active' : '' ?>"
                     href="ekstrakulikuler.php">
