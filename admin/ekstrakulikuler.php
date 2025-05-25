@@ -671,13 +671,6 @@ while ($pembina = mysqli_fetch_array($result_edit_pembina)) {
                                                                                         <h6 class="text-primary m-0"><i
                                                                                                 class="fas fa-calendar-check me-2"></i>Daftar
                                                                                             Kegiatan</h6>
-                                                                                        <button type="button"
-                                                                                            class="btn btn-sm btn-primary create-kegiatan-btn"
-                                                                                            data-ekstra-id="<?php echo $data["id_ekstrakulikuler"]; ?>">
-                                                                                            <i
-                                                                                                class="fas fa-plus-circle me-1"></i>
-                                                                                            Tambah Kegiatan
-                                                                                        </button>
                                                                                     </div>
 
                                                                                     <div
@@ -2104,6 +2097,7 @@ while ($pembina = mysqli_fetch_array($result_edit_pembina)) {
             }
         });
     </script>
+
     <script>
         $(document).ready(function () {
             console.log('Document ready - peserta script loaded');
@@ -2399,6 +2393,7 @@ while ($pembina = mysqli_fetch_array($result_edit_pembina)) {
             }
         });
     </script>
+
     <script>
         $(document).ready(function () {
             console.log('Document ready - validasi script loaded');
@@ -2764,6 +2759,7 @@ while ($pembina = mysqli_fetch_array($result_edit_pembina)) {
             }
         });
     </script>
+
     <script>
         $(document).ready(function () {
             console.log('Document ready - absensi script loaded');
@@ -3121,6 +3117,7 @@ while ($pembina = mysqli_fetch_array($result_edit_pembina)) {
             }
         });
     </script>
+
     <script>
         $(document).ready(function () {
             console.log('Document ready - nilai script loaded');

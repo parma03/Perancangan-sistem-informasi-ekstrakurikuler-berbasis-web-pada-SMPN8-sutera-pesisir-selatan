@@ -56,7 +56,6 @@ if ($request == 'get_kegiatan') {
                         <th scope="col" style="width: 25%;">Nama Kegiatan</th>
                         <th scope="col" style="width: 25%;">Deskripsi Kegiatan</th>
                         <th scope="col" style="width: 20%;">Jadwal</th>
-                        <th scope="col" style="width: 20%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,24 +70,6 @@ if ($request == 'get_kegiatan') {
                             <td><?php echo htmlspecialchars($k['nama_kegiatan']); ?></td>
                             <td><?php echo htmlspecialchars($k['kegiatan']); ?></td>
                             <td><?php echo $jadwal; ?></td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-warning edit-kegiatan-btn"
-                                        data-id="<?php echo $k['id_kegiatan']; ?>"
-                                        data-ekstra-id="<?php echo $k['id_ekstrakulikuler']; ?>"
-                                        data-name="<?php echo htmlspecialchars($k['nama_kegiatan']); ?>"
-                                        data-kegiatan="<?php echo htmlspecialchars($k['kegiatan']); ?>"
-                                        data-jadwal="<?php echo $k['jadwal']; ?>">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger delete-kegiatan-btn"
-                                        data-id="<?php echo $k['id_kegiatan']; ?>"
-                                        data-name="<?php echo htmlspecialchars($k['nama_kegiatan']); ?>"
-                                        data-ekstra-id="<?php echo $k['id_ekstrakulikuler']; ?>">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
                         </tr>
                         <?php
                     }

@@ -44,7 +44,7 @@ if ($request == 'get_nilai') {
               WHERE p.id_ekstrakulikuler = ? 
               GROUP BY p.id_peserta, p.id_user, s.siswa_nama, n.id_nilai, n.nilai_keaktifan, n.nilai_keterampilan, n.nilai_sikap, n.nilai_akhir
               ORDER BY s.siswa_nama ASC";
-    
+
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $id_ekstrakulikuler);
     $stmt->execute();
@@ -65,12 +65,8 @@ if ($request == 'get_nilai') {
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="alert alert-info mb-0 py-2">
                         <small><i class="fas fa-info-circle me-1"></i>
-                        <strong>Komponen Penilaian:</strong> Keaktifan (30%), Keterampilan (40%), Sikap (30%)</small>
+                            <strong>Komponen Penilaian:</strong> Keaktifan (30%), Keterampilan (40%), Sikap (30%)</small>
                     </div>
-                    <button type="button" class="btn btn-success save-all-nilai-btn"
-                        data-ekstra-id="<?php echo $id_ekstrakulikuler; ?>">
-                        <i class="fas fa-save me-1"></i> Simpan Semua Nilai
-                    </button>
                 </div>
             </div>
 
@@ -85,7 +81,6 @@ if ($request == 'get_nilai') {
                             <th scope="col" style="width: 12%;">Keterampilan<br><small>(0-100)</small></th>
                             <th scope="col" style="width: 12%;">Sikap<br><small>(0-100)</small></th>
                             <th scope="col" style="width: 12%;">Nilai Akhir</th>
-                            <th scope="col" style="width: 12%;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,7 +92,7 @@ if ($request == 'get_nilai') {
                             $total_hadir = intval($p['total_hadir']);
                             $total_tidak_hadir = intval($p['total_tidak_hadir']);
                             $persentase_kehadiran = $total_absensi > 0 ? round(($total_hadir / $total_absensi) * 100, 1) : 0;
-                            
+
                             // Determine attendance color
                             $attendance_class = 'text-success';
                             if ($persentase_kehadiran < 75) {
@@ -137,31 +132,31 @@ if ($request == 'get_nilai') {
                                     </div>
                                 </td>
                                 <td>
-                                    <input type="number" 
-                                           class="form-control form-control-sm nilai-keaktifan" 
-                                           id="nilai_keaktifan_<?php echo $p['id_peserta']; ?>"
-                                           value="<?php echo $nilai_keaktifan; ?>"
-                                           min="0" max="100" 
-                                           placeholder="0-100"
-                                           <?php echo $is_saved ? 'readonly' : ''; ?>>
+                                    <?php if ($is_saved) { ?>
+                                        <div class="fw-bold text-primary">
+                                            <?php echo number_format($nilai_keaktifan, 1); ?>
+                                        </div>
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
                                 </td>
                                 <td>
-                                    <input type="number" 
-                                           class="form-control form-control-sm nilai-keterampilan" 
-                                           id="nilai_keterampilan_<?php echo $p['id_peserta']; ?>"
-                                           value="<?php echo $nilai_keterampilan; ?>"
-                                           min="0" max="100" 
-                                           placeholder="0-100"
-                                           <?php echo $is_saved ? 'readonly' : ''; ?>>
+                                    <?php if ($is_saved) { ?>
+                                        <div class="fw-bold text-primary">
+                                            <?php echo number_format($nilai_keterampilan, 1); ?>
+                                        </div>
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
                                 </td>
                                 <td>
-                                    <input type="number" 
-                                           class="form-control form-control-sm nilai-sikap" 
-                                           id="nilai_sikap_<?php echo $p['id_peserta']; ?>"
-                                           value="<?php echo $nilai_sikap; ?>"
-                                           min="0" max="100" 
-                                           placeholder="0-100"
-                                           <?php echo $is_saved ? 'readonly' : ''; ?>>
+                                    <?php if ($is_saved) { ?>
+                                        <div class="fw-bold text-primary">
+                                            <?php echo number_format($nilai_sikap, 1); ?>
+                                        </div>
+                                    <?php } else { ?>
+                                        <span class="text-muted">-</span>
+                                    <?php } ?>
                                 </td>
                                 <td class="text-center">
                                     <?php if ($is_saved) { ?>
@@ -169,29 +164,19 @@ if ($request == 'get_nilai') {
                                             <?php echo number_format($nilai_akhir, 1); ?>
                                         </div>
                                         <small class="text-muted">
-                                            <?php 
-                                            if ($nilai_akhir >= 85) echo '<span class="text-success">Sangat Baik</span>';
-                                            elseif ($nilai_akhir >= 75) echo '<span class="text-info">Baik</span>';
-                                            elseif ($nilai_akhir >= 65) echo '<span class="text-warning">Cukup</span>';
-                                            else echo '<span class="text-danger">Kurang</span>';
+                                            <?php
+                                            if ($nilai_akhir >= 85)
+                                                echo '<span class="text-success">Sangat Baik</span>';
+                                            elseif ($nilai_akhir >= 75)
+                                                echo '<span class="text-info">Baik</span>';
+                                            elseif ($nilai_akhir >= 65)
+                                                echo '<span class="text-warning">Cukup</span>';
+                                            else
+                                                echo '<span class="text-danger">Kurang</span>';
                                             ?>
                                         </small>
                                     <?php } else { ?>
                                         <span class="text-muted">-</span>
-                                    <?php } ?>
-                                </td>
-                                <td>
-                                    <?php if (!$is_saved) { ?>
-                                        <button type="button" class="btn btn-sm btn-primary save-nilai-btn"
-                                            data-id="<?php echo $p['id_peserta']; ?>"
-                                            data-name="<?php echo htmlspecialchars($p['siswa_nama']); ?>"
-                                            data-ekstra-id="<?php echo $id_ekstrakulikuler; ?>">
-                                            <i class="fas fa-save"></i> Simpan
-                                        </button>
-                                    <?php } else { ?>
-                                        <span class="text-success">
-                                            <i class="fas fa-check-circle"></i> Tersimpan
-                                        </span>
                                     <?php } ?>
                                 </td>
                             </tr>
@@ -213,7 +198,7 @@ if ($request == 'get_nilai') {
                         $belum_dinilai = 0;
                         $rata_rata_nilai = 0;
                         $total_nilai = 0;
-                        
+
                         foreach ($peserta as $p) {
                             if (!empty($p['id_nilai'])) {
                                 $sudah_dinilai++;
@@ -222,7 +207,7 @@ if ($request == 'get_nilai') {
                                 $belum_dinilai++;
                             }
                         }
-                        
+
                         $rata_rata_nilai = $sudah_dinilai > 0 ? $total_nilai / $sudah_dinilai : 0;
                         ?>
                         <div class="row text-center">
@@ -275,9 +260,11 @@ if ($request == 'save_nilai') {
     }
 
     // Validate nilai range
-    if ($nilai_keaktifan < 0 || $nilai_keaktifan > 100 ||
+    if (
+        $nilai_keaktifan < 0 || $nilai_keaktifan > 100 ||
         $nilai_keterampilan < 0 || $nilai_keterampilan > 100 ||
-        $nilai_sikap < 0 || $nilai_sikap > 100) {
+        $nilai_sikap < 0 || $nilai_sikap > 100
+    ) {
         echo json_encode(['status' => 'error', 'message' => 'Nilai harus antara 0-100']);
         exit;
     }
@@ -303,7 +290,7 @@ if ($request == 'save_nilai') {
                         WHERE id_peserta = ?";
         $update_stmt = $conn->prepare($update_query);
         $update_stmt->bind_param("ddddi", $nilai_keaktifan, $nilai_keterampilan, $nilai_sikap, $nilai_akhir, $id_peserta);
-        
+
         if ($update_stmt->execute()) {
             echo json_encode(['status' => 'success', 'message' => 'Berhasil memperbarui nilai peserta']);
         } else {
@@ -349,9 +336,11 @@ if ($request == 'save_all_nilai') {
             $nilai_sikap = $data['nilai_sikap'];
 
             // Validate nilai range
-            if ($nilai_keaktifan < 0 || $nilai_keaktifan > 100 ||
+            if (
+                $nilai_keaktifan < 0 || $nilai_keaktifan > 100 ||
                 $nilai_keterampilan < 0 || $nilai_keterampilan > 100 ||
-                $nilai_sikap < 0 || $nilai_sikap > 100) {
+                $nilai_sikap < 0 || $nilai_sikap > 100
+            ) {
                 throw new Exception("Nilai harus antara 0-100 untuk peserta ID: $id_peserta");
             }
 
@@ -376,7 +365,7 @@ if ($request == 'save_all_nilai') {
                                 WHERE id_peserta = ?";
                 $update_stmt = $conn->prepare($update_query);
                 $update_stmt->bind_param("ddddi", $nilai_keaktifan, $nilai_keterampilan, $nilai_sikap, $nilai_akhir, $id_peserta);
-                
+
                 if ($update_stmt->execute()) {
                     $update_count++;
                     $success_count++;

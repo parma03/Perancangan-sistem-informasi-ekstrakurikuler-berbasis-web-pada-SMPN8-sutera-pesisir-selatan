@@ -106,6 +106,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <span class="nav-link-text ms-1">Ekstrakulikuler</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link <?= $current_page == 'laporan.php' ? 'active' : '' ?>" href="laporan.php">
+                    <div
+                        class="icon icon-shape icon-sm px-0 text-center d-flex align-items-center justify-content-center">
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Laporan</span>
+                </a>
+            </li>
         </ul>
     </div>
 </aside>
