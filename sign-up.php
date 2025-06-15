@@ -41,13 +41,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['register'])) {
 
         if ($stmt->execute()) {
             $last_id = $stmt->insert_id;
-            $query_pimpinan = "INSERT INTO tb_pemohon (id_user, nama) VALUES (?, ?)";
+            $query_pimpinan = "INSERT INTO tb_siswa (id_user, siswa_nama) VALUES (?, ?)";
             $stmt = $conn->prepare($query_pimpinan);
             $stmt->bind_param("is", $last_id, $nama);
             if ($stmt->execute()) {
                 $_SESSION['notification'] = "Berhasil Register";
                 $_SESSION['alert'] = "alert-success";
-                header("Location: register.php");
+                header("Location: sign-up.php");
                 exit();
             } else {
                 echo "Error: " . $stmt->error;
@@ -88,9 +88,65 @@ $conn->close();
     <link href="assets/css/nucleo-svg.css" rel="stylesheet" />
     <!-- CSS Files -->
     <link id="pagestyle" href="assets/css/corporate-ui-dashboard.css?v=1.0.0" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/notification.css">
+
 </head>
 
 <body class="">
+    <!-- Notification Container -->
+    <div class="notification-container">
+        <?php if (isset($_SESSION['notification']) && isset($_SESSION['alert'])): ?>
+            <div class="alert fade alert-dismissible text-left <?php echo $_SESSION['alert']; ?> show">
+                <button type="button" class="close" onclick="this.parentElement.remove()">
+                    <span aria-hidden="true">
+                        <?php if ($_SESSION['alert'] == 'alert-success'): ?>
+                            <i class="fa fa-times greencross"></i>
+                        <?php elseif ($_SESSION['alert'] == 'alert-info'): ?>
+                            <i class="fa fa-times blue-cross"></i>
+                        <?php elseif ($_SESSION['alert'] == 'alert-warning'): ?>
+                            <i class="fa fa-times warning"></i>
+                        <?php elseif ($_SESSION['alert'] == 'alert-danger'): ?>
+                            <i class="fa fa-times danger"></i>
+                        <?php elseif ($_SESSION['alert'] == 'alert-primary'): ?>
+                            <i class="fa fa-times alertprimary"></i>
+                        <?php endif; ?>
+                    </span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <?php if ($_SESSION['alert'] == 'alert-success'): ?>
+                    <i class="start-icon far fa-check-circle faa-tada animated"></i>
+                <?php elseif ($_SESSION['alert'] == 'alert-info'): ?>
+                    <i class="start-icon fa fa-info-circle faa-shake animated"></i>
+                <?php elseif ($_SESSION['alert'] == 'alert-warning'): ?>
+                    <i class="start-icon fa fa-exclamation-triangle faa-flash animated"></i>
+                <?php elseif ($_SESSION['alert'] == 'alert-danger'): ?>
+                    <i class="start-icon far fa-times-circle faa-pulse animated"></i>
+                <?php elseif ($_SESSION['alert'] == 'alert-primary'): ?>
+                    <i class="start-icon fa fa-thumbs-up faa-bounce animated"></i>
+                <?php endif; ?>
+                <strong class="font-weight-bold">
+                    <?php
+                    if ($_SESSION['alert'] == 'alert-success')
+                        echo "Success!";
+                    elseif ($_SESSION['alert'] == 'alert-info')
+                        echo "Info!";
+                    elseif ($_SESSION['alert'] == 'alert-warning')
+                        echo "Warning!";
+                    elseif ($_SESSION['alert'] == 'alert-danger')
+                        echo "Error!";
+                    elseif ($_SESSION['alert'] == 'alert-primary')
+                        echo "Notice!";
+                    ?>
+                </strong>
+                <?php echo $_SESSION['notification']; ?>
+            </div>
+            <?php
+            // Clear the session variables after displaying
+            unset($_SESSION['notification']);
+            unset($_SESSION['alert']);
+            ?>
+        <?php endif; ?>
+    </div>
     <div class="container position-sticky z-index-sticky top-0">
         <div class="row">
             <div class="col-12">
@@ -173,25 +229,25 @@ $conn->close();
                                     <p class="mb-0">Nice to meet you! Please enter your details.</p>
                                 </div>
                                 <div class="card-body">
-                                    <form role="form">
+                                    <form role="form" action="sign-up.php" method="post">
                                         <label>Name</label>
                                         <div class="mb-3">
                                             <input type="text" class="form-control" placeholder="Enter your name"
-                                                aria-label="Name" aria-describedby="name-addon">
+                                                aria-label="Name" aria-describedby="name-addon" name="nama">
                                         </div>
-                                        <label>Email Address</label>
+                                        <label>Username</label>
                                         <div class="mb-3">
-                                            <input type="email" class="form-control"
-                                                placeholder="Enter your email address" aria-label="Email"
-                                                aria-describedby="email-addon">
+                                            <input type="text" class="form-control" placeholder="Enter your Username"
+                                                aria-label="Username" aria-describedby="username-addon" name="username">
                                         </div>
                                         <label>Password</label>
                                         <div class="mb-3">
-                                            <input type="email" class="form-control" placeholder="Create a password"
-                                                aria-label="Password" aria-describedby="password-addon">
+                                            <input type="password" class="form-control" placeholder="Create a password"
+                                                aria-label="Password" aria-describedby="password-addon" name="password">
                                         </div>
                                         <div class="text-center">
-                                            <button type="button" class="btn btn-dark w-100 mt-4 mb-3">Sign up</button>
+                                            <button type="submit" name="register"
+                                                class="btn btn-dark w-100 mt-4 mb-3">Sign up</button>
                                         </div>
                                     </form>
                                 </div>
