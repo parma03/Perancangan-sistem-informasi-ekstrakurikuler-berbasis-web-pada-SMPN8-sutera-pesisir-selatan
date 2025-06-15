@@ -21,9 +21,48 @@ if (isset($_SESSION['role'])) {
 
 $id_user = $_SESSION['id_user'];
 
+function cekPramuka($conn, $id_user)
+{
+    $query_pramuka = "SELECT COUNT(*) as count FROM tb_peserta tp 
+                      JOIN tb_ekstrakulikuler te ON tp.id_ekstrakulikuler = te.id_ekstrakulikuler 
+                      WHERE tp.id_user = ? AND LOWER(te.nama_ekstrakulikuler) LIKE '%pramuka%'";
+    $stmt_pramuka = $conn->prepare($query_pramuka);
+    $stmt_pramuka->bind_param("i", $id_user);
+    $stmt_pramuka->execute();
+    $result_pramuka = $stmt_pramuka->get_result();
+    $pramuka_data = $result_pramuka->fetch_assoc();
+    $stmt_pramuka->close();
+
+    return $pramuka_data['count'] > 0;
+}
+
+// Cek apakah user sudah terdaftar Pramuka
+$sudah_pramuka = cekPramuka($conn, $id_user);
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
     $id_ekstrakulikuler = $_POST['id_ekstrakulikuler'];
     $id_user = $_SESSION['id_user'];
+
+    // Cek nama ekstrakulikuler yang akan didaftar
+    $query_nama_ekstrak = "SELECT nama_ekstrakulikuler FROM tb_ekstrakulikuler WHERE id_ekstrakulikuler = ?";
+    $stmt_nama_ekstrak = $conn->prepare($query_nama_ekstrak);
+    $stmt_nama_ekstrak->bind_param("i", $id_ekstrakulikuler);
+    $stmt_nama_ekstrak->execute();
+    $result_nama_ekstrak = $stmt_nama_ekstrak->get_result();
+    $nama_ekstrak_data = $result_nama_ekstrak->fetch_assoc();
+    $stmt_nama_ekstrak->close();
+
+    $nama_ekstrakulikuler = strtolower($nama_ekstrak_data['nama_ekstrakulikuler']);
+    $is_pramuka = strpos($nama_ekstrakulikuler, 'pramuka') !== false;
+
+    // Jika bukan Pramuka dan belum terdaftar Pramuka, tolak pendaftaran
+    if (!$is_pramuka && !$sudah_pramuka) {
+        $_SESSION['notification'] = "Anda harus mendaftar dan menjadi peserta Pramuka terlebih dahulu sebelum dapat mendaftar ekstrakulikuler lain.";
+        $_SESSION['alert'] = "alert-warning";
+        header("Location: ekstrakulikuler.php");
+        exit();
+    }
 
     // Cek apakah user sudah terdaftar sebagai peserta
     $check_peserta = "SELECT id_peserta FROM tb_peserta WHERE id_user = ? AND id_ekstrakulikuler = ?";
@@ -67,21 +106,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
 }
 
 // Query yang dimodifikasi untuk menampilkan hanya ekstrakulikuler yang belum diikuti dan belum mengajukan validasi
-$query = "SELECT e.*, p.pembina_nama 
-          FROM tb_ekstrakulikuler e
-          LEFT JOIN tb_pembina p ON e.pembina_id = p.pembina_id 
-          WHERE e.status = 'Masih Berlangsung'
-          AND e.id_ekstrakulikuler NOT IN (
-              SELECT tp.id_ekstrakulikuler 
-              FROM tb_peserta tp 
-              WHERE tp.id_user = ?
-          )
-          AND e.id_ekstrakulikuler NOT IN (
-              SELECT tv.id_ekstrakulikuler 
-              FROM tb_validasi tv 
-              WHERE tv.id_user = ?
-          )
-          ORDER BY e.nama_ekstrakulikuler ASC";
+if (!$sudah_pramuka) {
+    $query = "SELECT e.*, p.pembina_nama 
+              FROM tb_ekstrakulikuler e
+              LEFT JOIN tb_pembina p ON e.pembina_id = p.pembina_id 
+              WHERE e.status = 'Masih Berlangsung'
+              AND LOWER(e.nama_ekstrakulikuler) LIKE '%pramuka%'
+              AND e.id_ekstrakulikuler NOT IN (
+                  SELECT tp.id_ekstrakulikuler 
+                  FROM tb_peserta tp 
+                  WHERE tp.id_user = ?
+              )
+              AND e.id_ekstrakulikuler NOT IN (
+                  SELECT tv.id_ekstrakulikuler 
+                  FROM tb_validasi tv 
+                  WHERE tv.id_user = ?
+              )
+              ORDER BY e.nama_ekstrakulikuler ASC";
+} else {
+    // Jika sudah terdaftar Pramuka, tampilkan semua kecuali yang sudah diikuti
+    $query = "SELECT e.*, p.pembina_nama 
+              FROM tb_ekstrakulikuler e
+              LEFT JOIN tb_pembina p ON e.pembina_id = p.pembina_id 
+              WHERE e.status = 'Masih Berlangsung'
+              AND e.id_ekstrakulikuler NOT IN (
+                  SELECT tp.id_ekstrakulikuler 
+                  FROM tb_peserta tp 
+                  WHERE tp.id_user = ?
+              )
+              AND e.id_ekstrakulikuler NOT IN (
+                  SELECT tv.id_ekstrakulikuler 
+                  FROM tb_validasi tv 
+                  WHERE tv.id_user = ?
+              )
+              ORDER BY e.nama_ekstrakulikuler ASC";
+}
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param("ii", $id_user, $id_user);
@@ -171,6 +230,18 @@ $result = $stmt->get_result();
         <?php include '_component/navbar.php'; ?>
         <!-- End Navbar -->
         <div class="container-fluid py-4 px-5">
+            <?php if (!$sudah_pramuka): ?>
+                <div class="row my-4">
+                    <div class="col-12">
+                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Perhatian!</strong> Anda harus mendaftar dan menjadi peserta Pramuka terlebih dahulu
+                            sebelum dapat mendaftar ekstrakulikuler lain.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
             <div class="row my-4">
                 <div class="col-lg col-md-6">
                     <div class="card border-0 shadow-xs mb-4">
@@ -180,7 +251,11 @@ $result = $stmt->get_result();
                                     <h6 class="font-weight-semibold text-lg mb-0">Data Ekstrakurikuler - Pendaftaran
                                     </h6>
                                     <p class="text-sm text-muted mb-sm-0">
-                                        Ekstrakurikuler yang tersedia untuk pendaftaran
+                                        <?php if (!$sudah_pramuka): ?>
+                                            Silakan daftar Pramuka terlebih dahulu
+                                        <?php else: ?>
+                                            Ekstrakurikuler yang tersedia untuk pendaftaran
+                                        <?php endif; ?>
                                     </p>
                                 </div>
                             </div>
@@ -191,8 +266,13 @@ $result = $stmt->get_result();
                                     <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
                                     <h5 class="text-muted">Tidak ada ekstrakulikuler yang tersedia</h5>
                                     <p class="text-sm text-muted">
-                                        Anda sudah terdaftar atau mengajukan pendaftaran untuk semua ekstrakulikuler yang
-                                        tersedia.
+                                        <?php if (!$sudah_pramuka): ?>
+                                            Anda belum terdaftar sebagai peserta Pramuka atau sudah mengajukan pendaftaran
+                                            Pramuka.
+                                        <?php else: ?>
+                                            Anda sudah terdaftar atau mengajukan pendaftaran untuk semua ekstrakulikuler yang
+                                            tersedia.
+                                        <?php endif; ?>
                                     </p>
                                 </div>
                             <?php else: ?>

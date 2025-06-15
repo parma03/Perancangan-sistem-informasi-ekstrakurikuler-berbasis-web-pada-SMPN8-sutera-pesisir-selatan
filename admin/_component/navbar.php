@@ -22,19 +22,19 @@ if (isset($_SESSION['role'])) {
     switch ($_SESSION['role']) {
         case 'Administrator':
             $user_name = $_SESSION['adm_nama'] ?? 'Administrator';
-            $user_profile = !empty($_SESSION['adm_profile']) ? '../assets/img/profiles/' . $_SESSION['adm_profile'] : '../assets/img/team-2.jpg';
+            $user_profile = !empty($_SESSION['adm_profile']) ? '../assets/img/profile/' . $_SESSION['adm_profile'] : '../assets/img/team-2.jpg';
             break;
         case 'Pembina':
             $user_name = $_SESSION['pembina_nama'] ?? 'Pembina';
-            $user_profile = !empty($_SESSION['pembina_profile']) ? '../assets/img/profiles/' . $_SESSION['pembina_profile'] : '../assets/img/team-2.jpg';
+            $user_profile = !empty($_SESSION['pembina_profile']) ? '../assets/img/profile/' . $_SESSION['pembina_profile'] : '../assets/img/team-2.jpg';
             break;
         case 'Siswa':
             $user_name = $_SESSION['siswa_nama'] ?? 'Siswa';
-            $user_profile = !empty($_SESSION['siswa_profile']) ? '../assets/img/profiles/' . $_SESSION['siswa_profile'] : '../assets/img/team-2.jpg';
+            $user_profile = !empty($_SESSION['siswa_profile']) ? '../assets/img/profile/' . $_SESSION['siswa_profile'] : '../assets/img/team-2.jpg';
             break;
         case 'Wakil':
             $user_name = $_SESSION['wakilkepalasekolah_nama'] ?? 'Wakil Kepala Sekolah';
-            $user_profile = !empty($_SESSION['wakilkepalasekolah_profile']) ? '../assets/img/profiles/' . $_SESSION['wakilkepalasekolah_profile'] : '../assets/img/team-2.jpg';
+            $user_profile = !empty($_SESSION['wakilkepalasekolah_profile']) ? '../assets/img/profile/' . $_SESSION['wakilkepalasekolah_profile'] : '../assets/img/team-2.jpg';
             break;
     }
 }
