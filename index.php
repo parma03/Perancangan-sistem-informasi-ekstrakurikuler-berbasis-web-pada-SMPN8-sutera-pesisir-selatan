@@ -45,8 +45,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
             if ($admin) {
                 $_SESSION['id_user'] = $admin['id_user'];
                 $_SESSION['username'] = $admin['username'];
-                $_SESSION['adm_nama'] = $admin['nama'];
-                $_SESSION['adm_profile'] = $admin['profile'];
+                $_SESSION['adm_nama'] = $admin['adm_nama'];
+                $_SESSION['adm_profile'] = $admin['adm_profile'];
                 header("Location: admin/index.php");
                 exit();
             }
@@ -61,8 +61,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
                 $_SESSION['id_user'] = $pembina['id_user'];
                 $_SESSION['pembina_id'] = $pembina['pembina_id'];
                 $_SESSION['username'] = $pembina['username'];
-                $_SESSION['pembina_nama'] = $pembina['nama'];
-                $_SESSION['pembina_profile'] = $pembina['profile'];
+                $_SESSION['pembina_nama'] = $pembina['pembina_nama'];
+                $_SESSION['pembina_profile'] = $pembina['pembina_profile'];
                 header("Location: pembina/index.php");
                 exit();
             }
@@ -76,8 +76,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
             if ($siswa) {
                 $_SESSION['id_user'] = $siswa['id_user'];
                 $_SESSION['username'] = $siswa['username'];
-                $_SESSION['siswa_nama'] = $siswa['nama'];
-                $_SESSION['siswa_profile'] = $siswa['profile'];
+                $_SESSION['siswa_nama'] = $siswa['siswa_nama'];
+                $_SESSION['siswa_profile'] = $siswa['siswa_profile'];
                 header("Location: siswa/index.php");
                 exit();
             }
@@ -92,8 +92,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
                 if ($wakil) {
                     $_SESSION['id_user'] = $wakil['id_user'];
                     $_SESSION['username'] = $wakil['username'];
-                    $_SESSION['wakilkepalasekolah_nama'] = $wakil['nama'];
-                    $_SESSION['wakilkepalasekolah_profile'] = $wakil['profile'];
+                    $_SESSION['wakilkepalasekolah_nama'] = $wakil['wakilkepalasekolah_nama'];
+                    $_SESSION['wakilkepalasekolah_profile'] = $wakil['wakilkepalasekolah_profile'];
                     header("Location: wakil/index.php");
                     exit();
                 }
