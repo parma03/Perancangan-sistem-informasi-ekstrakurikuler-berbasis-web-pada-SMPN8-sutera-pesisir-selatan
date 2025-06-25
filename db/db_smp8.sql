@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 22, 2025 at 07:57 PM
+-- Generation Time: Jun 25, 2025 at 12:48 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -60,7 +60,7 @@ CREATE TABLE `tb_admin` (
 --
 
 INSERT INTO `tb_admin` (`adm_id`, `id_user`, `adm_nama`, `adm_profile`) VALUES
-(2, 1, 'Admin Tesa', '6821fe3e0efd8.jpg');
+(2, 1, 'Administrator', 'Administrator_1_1749983122.jpg');
 
 -- --------------------------------------------------------
 
@@ -82,12 +82,36 @@ CREATE TABLE `tb_ekstrakulikuler` (
 --
 
 INSERT INTO `tb_ekstrakulikuler` (`id_ekstrakulikuler`, `pembina_id`, `nama_ekstrakulikuler`, `deskripsi_ekstrakulikuler`, `periode`, `status`) VALUES
-(9, 2, 'Ekstrakulikuler 1', 'Bla Bla Bla 1', '2025', 'Masih Berlangsung'),
+(9, 2, 'Ekstrakulikuler Pramuka', 'Bla Bla Bla 1', '2025', 'Masih Berlangsung'),
 (11, 4, 'Ekstrakulikuler 2', 'Bla Bla Bla 2', '2025', 'Masih Berlangsung'),
 (12, 4, 'Ekstrakulikuler 22', 'Bla Bla Bla 12', '2025', 'Masih Berlangsung'),
 (13, 2, 'a', 'a', '2025', 'Selesai'),
 (14, 2, 'asdawd', 'asad', '2025', 'Masih Berlangsung'),
 (15, 2, 'asdasdqaw', 'asdawd', '2025', 'Masih Berlangsung');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tb_form`
+--
+
+CREATE TABLE `tb_form` (
+  `id_form` bigint(11) NOT NULL,
+  `id_validasi` bigint(11) NOT NULL,
+  `nis` int(11) DEFAULT NULL,
+  `nama_lengkap` varchar(255) DEFAULT NULL,
+  `kelas` varchar(255) DEFAULT NULL,
+  `jenis_kelamin` enum('Laki-Laki','Perempuan') DEFAULT NULL,
+  `tanggal_lahir` date DEFAULT NULL,
+  `alamat` varchar(255) DEFAULT NULL,
+  `no_hp_siswa` int(20) DEFAULT NULL,
+  `no_hp_wali` int(20) DEFAULT NULL,
+  `alasan` text DEFAULT NULL,
+  `pengalaman` text DEFAULT NULL,
+  `ketersediaan` enum('Ya','Tidak') NOT NULL,
+  `persetujuan` enum('Ya','Tidak') NOT NULL,
+  `created_date` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -139,7 +163,9 @@ INSERT INTO `tb_kegiatan` (`id_kegiatan`, `id_ekstrakulikuler`, `nama_kegiatan`,
 (5, 9, 'te', 'asdasd asd asd asd as asd asd asd asdasd', '2025-05-22 23:47:00'),
 (6, 9, 'te', 'te', '2025-05-23 23:47:00'),
 (7, 9, 'te', 'te', '2025-05-23 23:47:00'),
-(8, 9, 'te', 'te', '2025-05-23 23:47:00');
+(8, 9, 'te', 'te', '2025-05-23 23:47:00'),
+(9, 9, 'tes', 'tes', '2025-05-24 14:11:00'),
+(10, 9, '123', '123', '2025-05-29 14:11:00');
 
 -- --------------------------------------------------------
 
@@ -205,7 +231,8 @@ CREATE TABLE `tb_peserta` (
 INSERT INTO `tb_peserta` (`id_peserta`, `id_ekstrakulikuler`, `id_user`) VALUES
 (4, 9, 12),
 (5, 9, 13),
-(6, 11, 13);
+(6, 11, 13),
+(7, 14, 12);
 
 -- --------------------------------------------------------
 
@@ -225,9 +252,11 @@ CREATE TABLE `tb_siswa` (
 --
 
 INSERT INTO `tb_siswa` (`siswa_id`, `id_user`, `siswa_nama`, `siswa_profile`) VALUES
-(2, 12, 'tes siswa1', '682dd2dcb6533.png'),
+(2, 12, 'tes siswa11', 'Siswa_12_1749983372.png'),
 (3, 13, 'tessiswa2', '682dd2f0c0c5f.png'),
-(4, 14, 'adfaerfdasf', '682de06ca134c.png');
+(4, 14, 'adfaerfdasf', '682de06ca134c.png'),
+(5, 17, 'sadf314', NULL),
+(6, 18, 'sadf314111', NULL);
 
 -- --------------------------------------------------------
 
@@ -250,9 +279,13 @@ INSERT INTO `tb_user` (`id_user`, `username`, `password`, `role`) VALUES
 (1, 'admin', '123', 'Administrator'),
 (9, 'pembina1', '123', 'Pembina'),
 (11, 'pembina2', '123', 'Pembina'),
-(12, 'tessiswa 1', '123', 'Siswa'),
+(12, 'tessiswa1', '123', 'Siswa'),
 (13, 'tessiswa2', '123', 'Siswa'),
-(14, 'sidjeij3wie', 'ef21341234', 'Siswa');
+(14, 'sidjeij3wie', 'ef21341234', 'Siswa'),
+(15, 'teswakil1', '123', 'Wakil'),
+(16, '12sdd', '123', 'Siswa'),
+(17, 'rtsfg213', '123', 'Siswa'),
+(18, 'rtsfg213111', '123', 'Siswa');
 
 -- --------------------------------------------------------
 
@@ -266,13 +299,6 @@ CREATE TABLE `tb_validasi` (
   `id_user` bigint(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `tb_validasi`
---
-
-INSERT INTO `tb_validasi` (`id_validasi`, `id_ekstrakulikuler`, `id_user`) VALUES
-(4, 15, 13);
-
 -- --------------------------------------------------------
 
 --
@@ -285,6 +311,13 @@ CREATE TABLE `tb_wakilkepalasekolah` (
   `wakilkepalasekolah_nama` varchar(255) NOT NULL,
   `wakilkepalasekolah_profile` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tb_wakilkepalasekolah`
+--
+
+INSERT INTO `tb_wakilkepalasekolah` (`wakilkepalasekolah_id`, `id_user`, `wakilkepalasekolah_nama`, `wakilkepalasekolah_profile`) VALUES
+(2, 15, '123', '682f6910dc16d.jpg');
 
 --
 -- Indexes for dumped tables
@@ -310,6 +343,13 @@ ALTER TABLE `tb_admin`
 ALTER TABLE `tb_ekstrakulikuler`
   ADD PRIMARY KEY (`id_ekstrakulikuler`),
   ADD KEY `pembina_id` (`pembina_id`);
+
+--
+-- Indexes for table `tb_form`
+--
+ALTER TABLE `tb_form`
+  ADD PRIMARY KEY (`id_form`),
+  ADD KEY `id_user` (`id_validasi`);
 
 --
 -- Indexes for table `tb_jadwal`
@@ -398,6 +438,12 @@ ALTER TABLE `tb_ekstrakulikuler`
   MODIFY `id_ekstrakulikuler` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
+-- AUTO_INCREMENT for table `tb_form`
+--
+ALTER TABLE `tb_form`
+  MODIFY `id_form` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `tb_jadwal`
 --
 ALTER TABLE `tb_jadwal`
@@ -407,7 +453,7 @@ ALTER TABLE `tb_jadwal`
 -- AUTO_INCREMENT for table `tb_kegiatan`
 --
 ALTER TABLE `tb_kegiatan`
-  MODIFY `id_kegiatan` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_kegiatan` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `tb_nilai`
@@ -425,31 +471,31 @@ ALTER TABLE `tb_pembina`
 -- AUTO_INCREMENT for table `tb_peserta`
 --
 ALTER TABLE `tb_peserta`
-  MODIFY `id_peserta` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_peserta` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `tb_siswa`
 --
 ALTER TABLE `tb_siswa`
-  MODIFY `siswa_id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `siswa_id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `tb_user`
 --
 ALTER TABLE `tb_user`
-  MODIFY `id_user` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id_user` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `tb_validasi`
 --
 ALTER TABLE `tb_validasi`
-  MODIFY `id_validasi` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_validasi` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `tb_wakilkepalasekolah`
 --
 ALTER TABLE `tb_wakilkepalasekolah`
-  MODIFY `wakilkepalasekolah_id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `wakilkepalasekolah_id` bigint(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
@@ -472,6 +518,12 @@ ALTER TABLE `tb_admin`
 --
 ALTER TABLE `tb_ekstrakulikuler`
   ADD CONSTRAINT `fk_pembina` FOREIGN KEY (`pembina_id`) REFERENCES `tb_pembina` (`pembina_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `tb_form`
+--
+ALTER TABLE `tb_form`
+  ADD CONSTRAINT `tb_form_ibfk_1` FOREIGN KEY (`id_validasi`) REFERENCES `tb_validasi` (`id_validasi`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `tb_jadwal`

@@ -36,12 +36,117 @@ function cekPramuka($conn, $id_user)
     return $pramuka_data['count'] > 0;
 }
 
+// Fungsi untuk validasi input
+function validateInput($data)
+{
+    $errors = [];
+
+    // Validasi NIS
+    if (empty($data['nis']) || !is_numeric($data['nis'])) {
+        $errors[] = "NIS harus berupa angka dan tidak boleh kosong.";
+    }
+
+    // Validasi Nama Lengkap
+    if (empty($data['nama_lengkap']) || strlen($data['nama_lengkap']) < 3) {
+        $errors[] = "Nama lengkap minimal 3 karakter.";
+    }
+
+    // Validasi Kelas
+    if (empty($data['kelas'])) {
+        $errors[] = "Kelas tidak boleh kosong.";
+    }
+
+    // Validasi Jenis Kelamin
+    if (empty($data['jenis_kelamin']) || !in_array($data['jenis_kelamin'], ['Laki-Laki', 'Perempuan'])) {
+        $errors[] = "Jenis kelamin harus dipilih.";
+    }
+
+    // Validasi Tanggal Lahir
+    if (empty($data['tanggal_lahir'])) {
+        $errors[] = "Tanggal lahir tidak boleh kosong.";
+    } else {
+        $birth_date = new DateTime($data['tanggal_lahir']);
+        $today = new DateTime();
+        $age = $today->diff($birth_date)->y;
+        if ($age < 10 || $age > 20) {
+            $errors[] = "Usia harus antara 10-20 tahun.";
+        }
+    }
+
+    // Validasi Alamat
+    if (empty($data['alamat']) || strlen($data['alamat']) < 10) {
+        $errors[] = "Alamat minimal 10 karakter.";
+    }
+
+    // Validasi Nomor HP Wali
+    if (empty($data['no_hp_wali']) || !preg_match('/^[0-9]{10,15}$/', $data['no_hp_wali'])) {
+        $errors[] = "Nomor HP orang tua harus 10-15 digit angka.";
+    }
+
+    // Validasi Nomor HP Siswa (opsional)
+    if (!empty($data['no_hp_siswa']) && !preg_match('/^[0-9]{10,15}$/', $data['no_hp_siswa'])) {
+        $errors[] = "Nomor HP siswa harus 10-15 digit angka.";
+    }
+
+    // Validasi Alasan
+    if (empty($data['alasan']) || strlen($data['alasan']) < 20) {
+        $errors[] = "Alasan memilih ekstrakurikuler minimal 20 karakter.";
+    }
+
+    // Validasi Ketersediaan dan Persetujuan
+    if (empty($data['ketersediaan']) || !in_array($data['ketersediaan'], ['Ya', 'Tidak'])) {
+        $errors[] = "Ketersediaan waktu harus dipilih.";
+    }
+
+    if (empty($data['persetujuan']) || !in_array($data['persetujuan'], ['Ya', 'Tidak'])) {
+        $errors[] = "Persetujuan orang tua harus dipilih.";
+    }
+
+    // Validasi bahwa ketersediaan dan persetujuan harus "Ya"
+    if ($data['ketersediaan'] === 'Tidak') {
+        $errors[] = "Anda harus tersedia mengikuti jadwal ekstrakurikuler.";
+    }
+
+    if ($data['persetujuan'] === 'Tidak') {
+        $errors[] = "Persetujuan orang tua diperlukan untuk mendaftar.";
+    }
+
+    return $errors;
+}
+
 // Cek apakah user sudah terdaftar Pramuka
 $sudah_pramuka = cekPramuka($conn, $id_user);
 
-
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
-    $id_ekstrakulikuler = $_POST['id_ekstrakulikuler'];
+    // Ambil data dari form
+    $form_data = [
+        'id_ekstrakulikuler' => $_POST['id_ekstrakulikuler'],
+        'nis' => trim($_POST['nis']),
+        'nama_lengkap' => trim($_POST['nama_lengkap']),
+        'kelas' => trim($_POST['kelas']),
+        'jenis_kelamin' => $_POST['jenis_kelamin'],
+        'tanggal_lahir' => $_POST['tanggal_lahir'],
+        'alamat' => trim($_POST['alamat']),
+        'no_hp_siswa' => trim($_POST['no_hp_siswa']),
+        'no_hp_wali' => trim($_POST['no_hp_wali']),
+        'alasan' => trim($_POST['alasan']),
+        'pengalaman' => trim($_POST['pengalaman']),
+        'ketersediaan' => $_POST['ketersediaan'],
+        'persetujuan' => $_POST['persetujuan'],
+        'created_date' => date('Y-m-d')
+    ];
+
+    // Validasi input
+    $validation_errors = validateInput($form_data);
+
+    if (!empty($validation_errors)) {
+        $_SESSION['notification'] = "Terdapat kesalahan dalam pengisian form:<br>• " . implode("<br>• ", $validation_errors);
+        $_SESSION['alert'] = "alert-danger";
+        header("Location: ekstrakulikuler.php");
+        exit();
+    }
+
+    $id_ekstrakulikuler = $form_data['id_ekstrakulikuler'];
     $id_user = $_SESSION['id_user'];
 
     // Cek nama ekstrakulikuler yang akan didaftar
@@ -78,29 +183,90 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
     $stmt_check_validasi->execute();
     $result_validasi = $stmt_check_validasi->get_result();
 
+    // Cek apakah NIS sudah terdaftar untuk ekstrakurikuler yang sama
+    $check_nis = "SELECT f.id_form FROM tb_form f 
+                  JOIN tb_validasi v ON f.id_validasi = v.id_validasi 
+                  WHERE f.nis = ? AND v.id_ekstrakulikuler = ?";
+    $stmt_check_nis = $conn->prepare($check_nis);
+    $stmt_check_nis->bind_param("ii", $form_data['nis'], $id_ekstrakulikuler);
+    $stmt_check_nis->execute();
+    $result_nis = $stmt_check_nis->get_result();
+
     if ($result_peserta->num_rows > 0) {
         $_SESSION['notification'] = "Anda sudah terdaftar sebagai peserta ekstrakulikuler ini.";
         $_SESSION['alert'] = "alert-warning";
     } elseif ($result_validasi->num_rows > 0) {
         $_SESSION['notification'] = "Anda sudah mengajukan pendaftaran untuk ekstrakulikuler ini. Tunggu konfirmasi.";
         $_SESSION['alert'] = "alert-info";
+    } elseif ($result_nis->num_rows > 0) {
+        $_SESSION['notification'] = "NIS tersebut sudah terdaftar untuk ekstrakulikuler ini.";
+        $_SESSION['alert'] = "alert-warning";
     } else {
-        $query = "INSERT INTO tb_validasi (id_ekstrakulikuler, id_user) VALUES (?, ?)";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("ii", $id_ekstrakulikuler, $id_user);
+        // Mulai transaksi
+        $conn->begin_transaction();
 
-        if ($stmt->execute()) {
-            $_SESSION['notification'] = "Berhasil Daftar Ekstrakulikuler ini.";
+        try {
+            // Insert ke tb_validasi
+            $query_validasi = "INSERT INTO tb_validasi (id_ekstrakulikuler, id_user) VALUES (?, ?)";
+            $stmt_validasi = $conn->prepare($query_validasi);
+            $stmt_validasi->bind_param("ii", $id_ekstrakulikuler, $id_user);
+            $stmt_validasi->execute();
+
+            // Ambil ID validasi yang baru dibuat
+            $id_validasi = mysqli_insert_id($conn);
+
+            // Siapkan variabel untuk bind_param (mengatasi masalah referensi)
+            $no_hp_siswa = !empty($form_data['no_hp_siswa']) ? $form_data['no_hp_siswa'] : null;
+            $pengalaman = !empty($form_data['pengalaman']) ? $form_data['pengalaman'] : null;
+
+            // Insert ke tb_form dengan data lengkap
+            $query_form = "INSERT INTO tb_form (
+                id_validasi, nis, nama_lengkap, kelas, jenis_kelamin, 
+                tanggal_lahir, alamat, no_hp_siswa, no_hp_wali, 
+                alasan, pengalaman, ketersediaan, persetujuan, created_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            $stmt_form = $conn->prepare($query_form);
+            $stmt_form->bind_param(
+                "iissssssssssss",
+                $id_validasi,
+                $form_data['nis'],
+                $form_data['nama_lengkap'],
+                $form_data['kelas'],
+                $form_data['jenis_kelamin'],
+                $form_data['tanggal_lahir'],
+                $form_data['alamat'],
+                $no_hp_siswa,
+                $form_data['no_hp_wali'],
+                $form_data['alasan'],
+                $pengalaman,
+                $form_data['ketersediaan'],
+                $form_data['persetujuan'],
+                $form_data['created_date']
+            );
+
+            $stmt_form->execute();
+
+            // Commit transaksi
+            $conn->commit();
+
+            $_SESSION['notification'] = "Berhasil mendaftar ekstrakurikuler! Data pendaftaran Anda telah disimpan dan menunggu persetujuan admin.";
             $_SESSION['alert'] = "alert-success";
-        } else {
-            $_SESSION['notification'] = "Gagal mendaftar ekstrakulikuler. Silakan coba lagi.";
+
+            $stmt_validasi->close();
+            $stmt_form->close();
+
+        } catch (Exception $e) {
+            // Rollback jika terjadi error
+            $conn->rollback();
+            $_SESSION['notification'] = "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.";
             $_SESSION['alert'] = "alert-danger";
         }
-        $stmt->close();
     }
 
     $stmt_check_peserta->close();
     $stmt_check_validasi->close();
+    $stmt_check_nis->close();
     header("Location: ekstrakulikuler.php");
     exit();
 }
@@ -552,38 +718,215 @@ $result = $stmt->get_result();
                                                     id="daftarModal<?php echo $data["id_ekstrakulikuler"]; ?>" tabindex="-1"
                                                     aria-labelledby="daftarModalLabel<?php echo $data["id_ekstrakulikuler"]; ?>"
                                                     aria-hidden="true">
-                                                    <div class="modal-dialog">
+                                                    <div class="modal-dialog modal-lg">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
                                                                 <h5 class="modal-title"
                                                                     id="daftarModalLabel<?php echo $data["id_ekstrakulikuler"]; ?>">
-                                                                    Daftar Ekstrakulikuler
+                                                                    Form Pendaftaran Ekstrakurikuler
                                                                 </h5>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                     aria-label="Close"></button>
                                                             </div>
-                                                            <div class="modal-body">
-                                                                <div class="alert alert-info">
-                                                                    <i class="fas fa-info-circle me-2"></i>
-                                                                    Setelah mendaftar, pendaftaran Anda akan masuk ke sistem
-                                                                    validasi dan menunggu persetujuan admin.
-                                                                </div>
-                                                                <p class="text-center">
-                                                                    <strong>Apakah Anda yakin ingin mendaftar pada
-                                                                        ekstrakulikuler ini?</strong>
-                                                                </p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <form action="ekstrakulikuler.php" method="post">
+                                                            <form action="ekstrakulikuler.php" method="post">
+                                                                <div class="modal-body">
                                                                     <input type="hidden" name="id_ekstrakulikuler"
                                                                         value="<?php echo $data["id_ekstrakulikuler"]; ?>" />
+
+                                                                    <!-- Data Pribadi Siswa -->
+                                                                    <h6 class="mb-3 text-primary"><i
+                                                                            class="fas fa-user me-2"></i>Data Pribadi Siswa</h6>
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="nis" class="form-label">NIS <span
+                                                                                        class="text-danger">*</span></label>
+                                                                                <input type="text" class="form-control"
+                                                                                    name="nis" id="nis" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="nama_lengkap"
+                                                                                    class="form-label">Nama Lengkap <span
+                                                                                        class="text-danger">*</span></label>
+                                                                                <input type="text" class="form-control"
+                                                                                    name="nama_lengkap" id="nama_lengkap"
+                                                                                    required>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="kelas" class="form-label">Kelas
+                                                                                    <span class="text-danger">*</span></label>
+                                                                                <input type="text" class="form-control"
+                                                                                    name="kelas" id="kelas"
+                                                                                    placeholder="contoh: 7A, 8B, 9C" required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="jenis_kelamin"
+                                                                                    class="form-label">Jenis Kelamin <span
+                                                                                        class="text-danger">*</span></label>
+                                                                                <select class="form-select" name="jenis_kelamin"
+                                                                                    id="jenis_kelamin" required>
+                                                                                    <option value="">Pilih Jenis Kelamin
+                                                                                    </option>
+                                                                                    <option value="Laki-Laki">Laki-Laki</option>
+                                                                                    <option value="Perempuan">Perempuan</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="tanggal_lahir"
+                                                                                    class="form-label">Tanggal Lahir <span
+                                                                                        class="text-danger">*</span></label>
+                                                                                <input type="date" class="form-control"
+                                                                                    name="tanggal_lahir" id="tanggal_lahir"
+                                                                                    required>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="no_hp_siswa"
+                                                                                    class="form-label">Nomor HP Siswa</label>
+                                                                                <input type="tel" class="form-control"
+                                                                                    name="no_hp_siswa" id="no_hp_siswa"
+                                                                                    placeholder="contoh: 08123456789">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="alamat" class="form-label">Alamat Lengkap
+                                                                            <span class="text-danger">*</span></label>
+                                                                        <textarea class="form-control" name="alamat" id="alamat"
+                                                                            rows="3" placeholder="Masukkan alamat lengkap"
+                                                                            required></textarea>
+                                                                    </div>
+
+                                                                    <!-- Data Orang Tua/Wali -->
+                                                                    <h6 class="mb-3 text-primary"><i
+                                                                            class="fas fa-users me-2"></i>Data Orang Tua/Wali
+                                                                    </h6>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="no_hp_wali" class="form-label">Nomor HP
+                                                                            Orang Tua/Wali <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <input type="tel" class="form-control" name="no_hp_wali"
+                                                                            id="no_hp_wali" placeholder="contoh: 08123456789"
+                                                                            required>
+                                                                    </div>
+
+                                                                    <!-- Data Ekstrakurikuler -->
+                                                                    <h6 class="mb-3 text-primary"><i
+                                                                            class="fas fa-graduation-cap me-2"></i>Data
+                                                                        Ekstrakurikuler</h6>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="nama_ekskul" class="form-label">Nama
+                                                                            Ekstrakurikuler yang Dipilih</label>
+                                                                        <input type="text" class="form-control"
+                                                                            name="nama_ekskul" id="nama_ekskul"
+                                                                            value="<?php echo $data['nama_ekstrakulikuler']; ?>"
+                                                                            readonly>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="alasan" class="form-label">Alasan Memilih
+                                                                            Ekstrakurikuler <span
+                                                                                class="text-danger">*</span></label>
+                                                                        <textarea class="form-control" name="alasan" id="alasan"
+                                                                            rows="3"
+                                                                            placeholder="Jelaskan alasan Anda memilih ekstrakurikuler ini"
+                                                                            required></textarea>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label for="pengalaman" class="form-label">Pengalaman
+                                                                            Terkait (jika ada)</label>
+                                                                        <textarea class="form-control" name="pengalaman"
+                                                                            id="pengalaman" rows="3"
+                                                                            placeholder="Ceritakan pengalaman yang relevan dengan ekstrakurikuler ini (jika tidak ada, tulis 'Tidak ada')"></textarea>
+                                                                    </div>
+
+                                                                    <!-- Konfirmasi -->
+                                                                    <h6 class="mb-3 text-primary"><i
+                                                                            class="fas fa-check-circle me-2"></i>Konfirmasi</h6>
+
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="ketersediaan"
+                                                                                    class="form-label">Ketersediaan Waktu <span
+                                                                                        class="text-danger">*</span></label>
+                                                                                <select class="form-select" name="ketersediaan"
+                                                                                    id="ketersediaan" required>
+                                                                                    <option value="">Pilih Ketersediaan</option>
+                                                                                    <option value="Ya">Ya, saya tersedia
+                                                                                        mengikuti jadwal ekstrakurikuler
+                                                                                    </option>
+                                                                                    <option value="Tidak">Tidak, saya memiliki
+                                                                                        kendala waktu</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <div class="mb-3">
+                                                                                <label for="persetujuan"
+                                                                                    class="form-label">Persetujuan Orang Tua
+                                                                                    <span class="text-danger">*</span></label>
+                                                                                <select class="form-select" name="persetujuan"
+                                                                                    id="persetujuan" required>
+                                                                                    <option value="">Pilih Persetujuan</option>
+                                                                                    <option value="Ya">Ya, orang tua menyetujui
+                                                                                    </option>
+                                                                                    <option value="Tidak">Tidak, orang tua belum
+                                                                                        menyetujui</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <input type="hidden" name="created_date"
+                                                                        value="<?php echo date('Y-m-d'); ?>">
+
+                                                                    <div class="alert alert-info">
+                                                                        <i class="fas fa-info-circle me-2"></i>
+                                                                        <strong>Informasi Penting:</strong><br>
+                                                                        • Setelah mendaftar, pendaftaran Anda akan masuk ke
+                                                                        sistem validasi dan menunggu persetujuan admin.<br>
+                                                                        • Pastikan semua data yang diisi sudah benar dan
+                                                                        lengkap.<br>
+                                                                        • Data yang sudah dikirim tidak dapat diubah.
+                                                                    </div>
+
+                                                                    <div class="alert alert-warning">
+                                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                                        <strong>Apakah Anda yakin semua data sudah benar dan
+                                                                            ingin mendaftar pada ekstrakurikuler ini?</strong>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
                                                                     <button type="button" class="btn btn-secondary"
-                                                                        data-bs-dismiss="modal">Batal</button>
+                                                                        data-bs-dismiss="modal">
+                                                                        <i class="fas fa-times me-2"></i>Batal
+                                                                    </button>
                                                                     <button type="submit" class="btn btn-primary" name="daftar">
                                                                         <i class="fas fa-user-plus me-2"></i>Daftar Sekarang
                                                                     </button>
-                                                                </form>
-                                                            </div>
+                                                                </div>
+                                                            </form>
                                                         </div>
                                                     </div>
                                                 </div>

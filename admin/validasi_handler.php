@@ -77,8 +77,8 @@ if ($request == 'get_validasi') {
                                 </div>
                             </th>
                             <th scope="col" style="width: 5%;">#</th>
-                            <th scope="col" style="width: 45%;">Nama Siswa</th>
-                            <th scope="col" style="width: 20%;">Aksi</th>
+                            <th scope="col" style="width: 35%;">Nama Siswa</th>
+                            <th scope="col" style="width: 35%;">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,16 +97,21 @@ if ($request == 'get_validasi') {
                                 <td><?php echo htmlspecialchars($v['siswa_nama']); ?></td>
                                 <td>
                                     <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info view-form-btn"
+                                            data-id="<?php echo $v['id_validasi']; ?>"
+                                            data-name="<?php echo htmlspecialchars($v['siswa_nama']); ?>" title="Lihat Formulir">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                         <button type="button" class="btn btn-sm btn-success accept-validasi-btn"
                                             data-id="<?php echo $v['id_validasi']; ?>" data-user-id="<?php echo $v['id_user']; ?>"
                                             data-name="<?php echo htmlspecialchars($v['siswa_nama']); ?>"
-                                            data-ekstra-id="<?php echo $v['id_ekstrakulikuler']; ?>">
+                                            data-ekstra-id="<?php echo $v['id_ekstrakulikuler']; ?>" title="Terima Peserta">
                                             <i class="fas fa-check"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger reject-validasi-btn"
                                             data-id="<?php echo $v['id_validasi']; ?>"
                                             data-name="<?php echo htmlspecialchars($v['siswa_nama']); ?>"
-                                            data-ekstra-id="<?php echo $v['id_ekstrakulikuler']; ?>">
+                                            data-ekstra-id="<?php echo $v['id_ekstrakulikuler']; ?>" title="Tolak Peserta">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -130,6 +135,47 @@ if ($request == 'get_validasi') {
 
     $html = ob_get_clean();
     echo json_encode(['status' => 'success', 'html' => $html]);
+    exit;
+}
+
+// Get Form Data for Modal
+if ($request == 'get_form_data') {
+    $id_validasi = $_POST['id_validasi'] ?? 0;
+
+    if (!$id_validasi) {
+        echo json_encode(['status' => 'error', 'message' => 'ID Validasi tidak valid']);
+        exit;
+    }
+
+    // Fetch form data
+    $query = "SELECT f.*, s.siswa_nama 
+              FROM tb_form f 
+              JOIN tb_validasi v ON f.id_validasi = v.id_validasi
+              JOIN tb_siswa s ON v.id_user = s.id_user
+              WHERE f.id_validasi = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $id_validasi);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Data formulir tidak ditemukan']);
+        exit;
+    }
+
+    $form_data = $result->fetch_assoc();
+
+    // Format tanggal lahir
+    if ($form_data['tanggal_lahir']) {
+        $form_data['tanggal_lahir_formatted'] = date('d-m-Y', strtotime($form_data['tanggal_lahir']));
+    }
+
+    // Format created date
+    if ($form_data['created_date']) {
+        $form_data['created_date_formatted'] = date('d-m-Y', strtotime($form_data['created_date']));
+    }
+
+    echo json_encode(['status' => 'success', 'data' => $form_data]);
     exit;
 }
 

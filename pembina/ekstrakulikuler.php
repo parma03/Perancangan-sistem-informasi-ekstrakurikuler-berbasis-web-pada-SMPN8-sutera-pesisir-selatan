@@ -2657,6 +2657,219 @@ $result = $conn->query($query);
         });
     </script>
 
+    <!-- Modal untuk menampilkan data formulir -->
+    <div class="modal fade" id="formDataModal" tabindex="-1" aria-labelledby="formDataModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="formDataModalLabel">
+                        <i class="fas fa-file-alt me-2"></i>Data Formulir Peserta
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="formDataContent">
+                    <!-- Loading content -->
+                    <div class="text-center" id="formDataLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Memuat data formulir...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            // Handle view form button click
+            $(document).on('click', '.view-form-btn', function () {
+                var validasi_id = $(this).data('id');
+                var siswa_name = $(this).data('name');
+
+                // Set modal title
+                $('#formDataModalLabel').html('<i class="fas fa-file-alt me-2"></i>Data Formulir - ' + siswa_name);
+
+                // Show loading
+                $('#formDataContent').html(`
+            <div class="text-center" id="formDataLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Memuat data formulir...</p>
+            </div>
+        `);
+
+                // Show modal
+                $('#formDataModal').modal('show');
+
+                // Fetch form data
+                $.ajax({
+                    url: 'validasi_handler.php', // Current page
+                    type: 'POST',
+                    data: {
+                        request: 'get_form_data',
+                        id_validasi: validasi_id
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            displayFormData(response.data);
+                        } else {
+                            $('#formDataContent').html(`
+                        <div class="alert alert-danger" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${response.message}
+                        </div>
+                    `);
+                        }
+                    },
+                    error: function () {
+                        $('#formDataContent').html(`
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Terjadi kesalahan saat memuat data formulir.
+                    </div>
+                `);
+                    }
+                });
+            });
+
+            function displayFormData(data) {
+                var html = `
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary mb-3">
+                                <i class="fas fa-user me-2"></i>Informasi Pribadi
+                            </h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>NIS:</strong>
+                                    <p class="mb-1">${data.nis || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Nama Lengkap:</strong>
+                                    <p class="mb-1">${data.nama_lengkap || '-'}</p>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Kelas:</strong>
+                                    <p class="mb-1">${data.kelas || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Jenis Kelamin:</strong>
+                                    <p class="mb-1">${data.jenis_kelamin || '-'}</p>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Tanggal Lahir:</strong>
+                                    <p class="mb-1">${data.tanggal_lahir_formatted || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Alamat:</strong>
+                                    <p class="mb-1">${data.alamat || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary mb-3">
+                                <i class="fas fa-phone me-2"></i>Kontak
+                            </h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>No. HP Siswa:</strong>
+                                    <p class="mb-1">${data.no_hp_siswa || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>No. HP Wali:</strong>
+                                    <p class="mb-1">${data.no_hp_wali || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary mb-3">
+                                <i class="fas fa-clipboard-list me-2"></i>Informasi Tambahan
+                            </h6>
+                            <div class="mb-3">
+                                <strong>Alasan Bergabung:</strong>
+                                <p class="mb-1 text-justify">${data.alasan || '-'}</p>
+                            </div>
+                            <div class="mb-3">
+                                <strong>Pengalaman:</strong>
+                                <p class="mb-1 text-justify">${data.pengalaman || '-'}</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Ketersediaan Waktu:</strong>
+                                    <p class="mb-1">
+                                        <span class="${data.ketersediaan === 'Ya' ? 'bg-success' : 'bg-danger'}">
+                                            ${data.ketersediaan || '-'}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Persetujuan Orang Tua:</strong>
+                                    <p class="mb-1">
+                                        <span class="${data.persetujuan === 'Ya' ? 'bg-success' : 'bg-danger'}">
+                                            ${data.persetujuan || '-'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary mb-3">
+                                <i class="fas fa-calendar me-2"></i>Informasi Sistem
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Tanggal Pendaftaran:</strong>
+                                    <p class="mb-1">${data.created_date_formatted || '-'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>ID Formulir:</strong>
+                                    <p class="mb-1">#${data.id_form || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                $('#formDataContent').html(html);
+            }
+        });
+    </script>
 </body>
 
 </html>
