@@ -21,6 +21,91 @@ if (isset($_SESSION['role'])) {
 
 $id_user = $_SESSION['id_user'];
 
+function cekJadwalBentrok($conn, $id_user, $id_ekstrakulikuler_baru)
+{
+    // Query untuk mendapatkan jadwal ekstrakurikuler yang akan didaftar
+    $query_jadwal_baru = "SELECT hari, duty_start, duty_end FROM tb_jadwal WHERE id_ekstrakulikuler = ?";
+    $stmt_jadwal_baru = $conn->prepare($query_jadwal_baru);
+    $stmt_jadwal_baru->bind_param("i", $id_ekstrakulikuler_baru);
+    $stmt_jadwal_baru->execute();
+    $result_jadwal_baru = $stmt_jadwal_baru->get_result();
+
+    $jadwal_baru = [];
+    while ($row = $result_jadwal_baru->fetch_assoc()) {
+        $jadwal_baru[] = $row;
+    }
+    $stmt_jadwal_baru->close();
+
+    if (empty($jadwal_baru)) {
+        return ['bentrok' => false, 'detail' => []];
+    }
+
+    // Query gabungan untuk mendapatkan jadwal ekstrakurikuler yang sudah diikuti (tb_peserta) 
+    // DAN yang sudah didaftar tapi belum divalidasi (tb_validasi)
+    $query_jadwal_existing = "
+        SELECT te.nama_ekstrakulikuler, tj.hari, tj.duty_start, tj.duty_end, 'peserta' as status
+        FROM tb_peserta tp
+        JOIN tb_ekstrakulikuler te ON tp.id_ekstrakulikuler = te.id_ekstrakulikuler
+        JOIN tb_jadwal tj ON te.id_ekstrakulikuler = tj.id_ekstrakulikuler
+        WHERE tp.id_user = ?
+        
+        UNION
+        
+        SELECT te.nama_ekstrakulikuler, tj.hari, tj.duty_start, tj.duty_end, 'validasi' as status
+        FROM tb_validasi tv
+        JOIN tb_ekstrakulikuler te ON tv.id_ekstrakulikuler = te.id_ekstrakulikuler
+        JOIN tb_jadwal tj ON te.id_ekstrakulikuler = tj.id_ekstrakulikuler
+        WHERE tv.id_user = ?
+    ";
+    $stmt_jadwal_existing = $conn->prepare($query_jadwal_existing);
+    $stmt_jadwal_existing->bind_param("ii", $id_user, $id_user);
+    $stmt_jadwal_existing->execute();
+    $result_jadwal_existing = $stmt_jadwal_existing->get_result();
+
+    $jadwal_bentrok = [];
+
+    while ($existing = $result_jadwal_existing->fetch_assoc()) {
+        foreach ($jadwal_baru as $baru) {
+            // Cek apakah hari sama
+            if (strtolower($existing['hari']) === strtolower($baru['hari'])) {
+                // Cek apakah waktu bentrok
+                $start_existing = strtotime($existing['duty_start']);
+                $end_existing = strtotime($existing['duty_end']);
+                $start_baru = strtotime($baru['duty_start']);
+                $end_baru = strtotime($baru['duty_end']);
+
+                // Handle jika waktu end lebih kecil dari start (melewati tengah malam)
+                if ($end_existing < $start_existing) {
+                    $end_existing += 24 * 3600; // Tambah 24 jam
+                }
+                if ($end_baru < $start_baru) {
+                    $end_baru += 24 * 3600; // Tambah 24 jam
+                }
+
+                // Cek bentrok waktu
+                if (($start_baru < $end_existing && $end_baru > $start_existing)) {
+                    // Tambahkan informasi status untuk membedakan apakah sudah peserta atau masih validasi
+                    $status_text = ($existing['status'] === 'peserta') ? '(Sudah Terdaftar)' : '(Menunggu Validasi)';
+
+                    $jadwal_bentrok[] = [
+                        'ekstrakurikuler' => $existing['nama_ekstrakulikuler'] . ' ' . $status_text,
+                        'hari' => $existing['hari'],
+                        'waktu_existing' => $existing['duty_start'] . ' - ' . $existing['duty_end'],
+                        'waktu_baru' => $baru['duty_start'] . ' - ' . $baru['duty_end']
+                    ];
+                }
+            }
+        }
+    }
+
+    $stmt_jadwal_existing->close();
+
+    return [
+        'bentrok' => !empty($jadwal_bentrok),
+        'detail' => $jadwal_bentrok
+    ];
+}
+
 function cekPramuka($conn, $id_user)
 {
     $query_pramuka = "SELECT COUNT(*) as count FROM tb_peserta tp 
@@ -149,6 +234,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
     $id_ekstrakulikuler = $form_data['id_ekstrakulikuler'];
     $id_user = $_SESSION['id_user'];
 
+    // *** TAMBAHKAN PENGECEKAN JADWAL BENTROK DI SINI ***
+    $cek_bentrok = cekJadwalBentrok($conn, $id_user, $id_ekstrakulikuler);
+
+    if ($cek_bentrok['bentrok']) {
+        $detail_bentrok = $cek_bentrok['detail'];
+        $pesan_bentrok = "Jadwal ekstrakurikuler bentrok dengan ekstrakurikuler yang sudah Anda ikuti:<br><br>";
+
+        foreach ($detail_bentrok as $bentrok) {
+            $pesan_bentrok .= "• <strong>" . $bentrok['ekstrakurikuler'] . "</strong><br>";
+            $pesan_bentrok .= "&nbsp;&nbsp;Hari: " . $bentrok['hari'] . "<br>";
+            $pesan_bentrok .= "&nbsp;&nbsp;Waktu yang bentrok: " . $bentrok['waktu_existing'] . " vs " . $bentrok['waktu_baru'] . "<br><br>";
+        }
+
+        $pesan_bentrok .= "Silakan pilih ekstrakurikuler lain atau hubungi admin untuk konsultasi jadwal.";
+
+        $_SESSION['notification'] = $pesan_bentrok;
+        $_SESSION['alert'] = "alert-warning";
+        header("Location: ekstrakulikuler.php");
+        exit();
+    }
+
     // Cek nama ekstrakulikuler yang akan didaftar
     $query_nama_ekstrak = "SELECT nama_ekstrakulikuler FROM tb_ekstrakulikuler WHERE id_ekstrakulikuler = ?";
     $stmt_nama_ekstrak = $conn->prepare($query_nama_ekstrak);
@@ -255,7 +361,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['daftar'])) {
 
             $stmt_validasi->close();
             $stmt_form->close();
-
         } catch (Exception $e) {
             // Rollback jika terjadi error
             $conn->rollback();
@@ -528,8 +633,10 @@ $result = $stmt->get_result();
                                                             <i class="fas fa-eye"></i>
                                                         </button>
 
-                                                        <button type="button" class="btn-action" data-bs-toggle="modal"
+                                                        <button type="button" class="btn-action btn-daftar-ekstrakurikuler"
+                                                            data-bs-toggle="modal"
                                                             data-bs-title="Daftar Ekstrakulikuler"
+                                                            data-ekstrakurikuler-id="<?php echo $data["id_ekstrakulikuler"]; ?>"
                                                             data-bs-target="#daftarModal<?php echo $data["id_ekstrakulikuler"]; ?>">
                                                             <i class="fas fa-user-plus"></i>
                                                         </button>
@@ -955,7 +1062,7 @@ $result = $stmt->get_result();
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             <?php if ($result->num_rows > 0): ?>
                 $('#datatable-transaksi').DataTable({
                     responsive: true,
@@ -974,11 +1081,11 @@ $result = $stmt->get_result();
                         orderable: false,
                         targets: -1 // Nonaktifkan sort di kolom "Action" (kolom terakhir)
                     }],
-                    initComplete: function () {
+                    initComplete: function() {
                         // Initialize tooltips after DataTables loads
                         var tooltipTriggerList = [].slice.call(document.querySelectorAll(
                             '[data-bs-toggle="tooltip"]'))
-                        tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        tooltipTriggerList.map(function(tooltipTriggerEl) {
                             return new bootstrap.Tooltip(tooltipTriggerEl)
                         });
                     }
@@ -987,10 +1094,123 @@ $result = $stmt->get_result();
 
             // Enable Bootstrap tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl)
             });
         });
+
+        $(document).on('click', '.btn-daftar-ekstrakurikuler', function(e) {
+            e.preventDefault(); // Prevent default action
+
+            const idEkstrakurikuler = $(this).data('ekstrakurikuler-id');
+            console.log('ID Ekstrakurikuler yang akan dicek:', idEkstrakurikuler); // Debug log
+
+            // Cek jadwal bentrok sebelum menampilkan modal
+            cekJadwalBentrokAjax(idEkstrakurikuler, function(response) {
+                console.log('Response pengecekan bentrok:', response); // Debug log
+
+                if (response.bentrok) {
+                    // Pastikan modal ditutup jika terbuka
+                    $(`#daftarModal${idEkstrakurikuler}`).modal('hide');
+
+                    // Tunggu sebentar untuk memastikan modal tertutup sebelum menampilkan alert
+                    setTimeout(function() {
+                        let pesanBentrok = "⚠️ JADWAL BENTROK TERDETEKSI!\n\n";
+                        pesanBentrok += "Ekstrakurikuler yang akan Anda daftar memiliki jadwal yang bentrok dengan:\n\n";
+
+                        response.detail.forEach(function(bentrok) {
+                            pesanBentrok += `• ${bentrok.ekstrakurikuler}\n`;
+                            pesanBentrok += `  Hari: ${bentrok.hari}\n`;
+                            pesanBentrok += `  Waktu: ${bentrok.waktu_existing} vs ${bentrok.waktu_baru}\n\n`;
+                        });
+
+                        pesanBentrok += "Silakan pilih ekstrakurikuler lain atau hubungi admin untuk konsultasi jadwal.";
+
+                        Swal.fire({
+                            title: '⚠️ Jadwal Bentrok!',
+                            html: pesanBentrok.replace(/\n/g, '<br>'),
+                            icon: 'warning',
+                            showCancelButton: false,
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'Mengerti',
+                            customClass: {
+                                popup: 'swal-wide'
+                            },
+                            backdrop: true, // Pastikan backdrop aktif
+                            allowOutsideClick: true // Allow click outside to close
+                        });
+                    }, 300); // Delay 300ms untuk memastikan modal tertutup
+                } else {
+                    // Jika tidak bentrok, langsung buka modal
+                    $(`#daftarModal${idEkstrakurikuler}`).modal('show');
+                }
+            });
+        });
+
+        function cekJadwalBentrokAjax(idEkstrakurikuler, callback) {
+            console.log('Mengirim AJAX request untuk ID:', idEkstrakurikuler); // Debug log
+
+            $.ajax({
+                url: 'check_jadwal_bentrok.php',
+                type: 'POST',
+                data: {
+                    id_ekstrakulikuler: idEkstrakurikuler,
+                    id_user: <?php echo $_SESSION['id_user']; ?>
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('AJAX Response:', response); // Debug log
+                    callback(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', error); // Debug log
+                    console.error('Response Text:', xhr.responseText); // Debug response
+                    callback({
+                        bentrok: false,
+                        detail: []
+                    });
+                }
+            });
+        }
+
+        $(document).on('shown.bs.modal', function(e) {
+            // Jika ada SweetAlert yang aktif, tutup modal
+            if (Swal.isVisible()) {
+                $(e.target).modal('hide');
+            }
+        });
+
+
+        $(document).on('show.bs.modal', function(e) {
+            // Jika SweetAlert sedang aktif, prevent modal dari muncul
+            if (Swal.isVisible()) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+
+        // Tambahkan CSS untuk SweetAlert yang lebih lebar
+        const style = document.createElement('style');
+        style.textContent = `
+        .swal-wide {
+            width: 600px !important;
+            z-index: 9999 !important; /* Pastikan SweetAlert di atas modal */
+        }
+        .swal2-html-container {
+            text-align: left !important;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .swal2-backdrop-show {
+            z-index: 9998 !important; /* Backdrop SweetAlert */
+        }
+        /* Pastikan modal backdrop tidak menghalangi SweetAlert */
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        `;
+        document.head.appendChild(style);
     </script>
 
     <!--   Core JS Files   -->
